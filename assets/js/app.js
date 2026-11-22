@@ -1,11 +1,12 @@
 
-/* Saino application bootstrap and authentication screen. */
+/* Saino Application Shell */
 (function (global) {
   "use strict";
 
   if (global.SainoApp) return;
 
   const ROOT_ID = "saino-app";
+
   let mode = "login";
   let initialized = false;
   let busy = false;
@@ -13,20 +14,20 @@
   let statusType = "info";
   let lastAuthError = "";
   let languageUnsubscribe = null;
+  let activeConversation = null;
 
   const root = () => document.getElementById(ROOT_ID);
   const language = () => global.KSKLanguage;
-
-  const t = (key, fallbackEn, fallbackNe) => {
-    const service = language();
-    if (service?.t) return service.t(key);
-    return service?.getLanguage?.() === "en"
-      ? fallbackEn
-      : fallbackNe;
-  };
+  const auth = () => global.KSKSupabaseAuth;
 
   const isEnglish = () =>
     language()?.getLanguage?.() === "en";
+
+  const t = (key, en, ne) => {
+    const service = language();
+    if (service?.t) return service.t(key);
+    return isEnglish() ? en : ne;
+  };
 
   const escapeHTML = value =>
     String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -36,6 +37,49 @@
       '"': "&quot;",
       "'": "&#39;"
     })[char]);
+
+  /* TOAST */
+
+  function ensureToastHost() {
+    let host = document.querySelector(
+      ".saino-toast-container"
+    );
+
+    if (host) return host;
+
+    host = document.createElement("div");
+    host.className = "saino-toast-container";
+    host.setAttribute("aria-live", "polite");
+    host.setAttribute("aria-atomic", "true");
+
+    document.body.appendChild(host);
+
+    return host;
+  }
+
+  function showToast(message, type = "success") {
+    const text = String(message || "").trim();
+    if (!text) return;
+
+    const host = ensureToastHost();
+    const toast = document.createElement("div");
+
+    toast.className =
+      `saino-toast ${type === "error" ? "error" : "success"}`;
+
+    toast.textContent = text;
+    host.appendChild(toast);
+
+    global.setTimeout(() => {
+      toast.remove();
+
+      if (!host.childElementCount) {
+        host.remove();
+      }
+    }, 3200);
+  }
+
+  /* AUTH STATUS */
 
   function setStatus(message, type = "info") {
     statusMessage = String(message || "");
@@ -70,13 +114,13 @@
     if (submit) {
       submit.textContent = busy
         ? t("loading", "Loading…", "लोड हुँदैछ…")
-        : (
-            mode === "signup"
-              ? t("signUp", "Create account", "खाता बनाउनुहोस्")
-              : t("login", "Log in", "लगइन")
-          );
+        : mode === "signup"
+          ? t("signUp", "Create account", "खाता बनाउनुहोस्")
+          : t("login", "Log in", "लगइन");
     }
   }
+
+  /* AUTH SCREEN */
 
   function renderAuth(errorMessage = "") {
     const host = root();
@@ -104,6 +148,7 @@
 
     host.innerHTML = `
       <section class="saino-auth-page">
+
         <div class="saino-auth-card">
 
           <div class="saino-brand" style="margin-bottom:22px">
@@ -162,6 +207,7 @@
             data-saino-auth-status
             role="status"
             aria-live="polite"
+            data-type="${escapeHTML(statusType)}"
             ${statusMessage || errorMessage ? "" : "hidden"}
           >${escapeHTML(errorMessage || statusMessage)}</p>
 
@@ -215,12 +261,145 @@
       </section>
     `;
 
-    if (busy) {
-      setBusy(true);
-    } else if (statusMessage) {
-      setStatus(statusMessage, statusType);
+    if (busy) setBusy(true);
+  }
+
+  /* WELCOME PANEL */
+
+  function renderWelcomePanel() {
+    return `
+      <section
+        class="saino-conversation saino-welcome-panel"
+        aria-label="${isEnglish() ? "Welcome" : "स्वागत"}"
+      >
+        <div class="saino-empty-state">
+
+          <div class="saino-empty-icon" aria-hidden="true">S</div>
+
+          <h2>
+            ${escapeHTML(t(
+              "welcomeTitle",
+              "Welcome to Saino",
+              "Saino मा स्वागत छ"
+            ))}
+          </h2>
+
+          <p>
+            ${escapeHTML(t(
+              "welcomeBody",
+              "Start a simple and secure conversation with your friends.",
+              "आफ्ना साथीहरूसँग सुरक्षित र सजिलो तरिकाले कुराकानी सुरु गर्नुहोस्।"
+            ))}
+          </p>
+
+        </div>
+      </section>
+    `;
+  }
+
+  /* IMAGE VALIDATION */
+
+  function safeImageURL(value) {
+    try {
+      const url = new URL(
+        String(value || ""),
+        global.location.href
+      );
+
+      return url.protocol === "https:" ||
+        url.protocol === "http:"
+          ? url.href
+          : "";
+    } catch (_) {
+      return "";
     }
   }
+
+  /* CONVERSATION PANEL */
+
+  function renderConversationPanel(conversation) {
+    const name = conversation?.name ||
+      t("conversation", "Conversation", "कुराकानी");
+
+    const avatar =
+      conversation?.avatar ||
+      conversation?.avatarUrl ||
+      "";
+
+    const initial =
+      Array.from(String(name).trim())[0] || "S";
+
+    const safeAvatar = safeImageURL(avatar);
+
+    const avatarMarkup = safeAvatar
+      ? `<img
+           src="${escapeHTML(safeAvatar)}"
+           alt=""
+           referrerpolicy="no-referrer"
+         >`
+      : escapeHTML(initial);
+
+    return `
+      <section
+        class="saino-conversation"
+        aria-label="${escapeHTML(name)}"
+      >
+
+        <header class="saino-conversation-header">
+
+          <div class="saino-contact">
+
+            <button
+              class="saino-icon-button saino-back-button"
+              type="button"
+              data-action="back-to-chats"
+              aria-label="${escapeHTML(t("back", "Back", "पछाडि"))}"
+            >‹</button>
+
+            <div class="saino-avatar">
+              ${avatarMarkup}
+            </div>
+
+            <div class="saino-contact-info">
+
+              <div class="saino-contact-name">
+                ${escapeHTML(name)}
+              </div>
+
+              <div class="saino-contact-status">
+                ${escapeHTML(t(
+                  "messages",
+                  "Messages",
+                  "सन्देशहरू"
+                ))}
+              </div>
+
+            </div>
+          </div>
+
+          <div
+            class="saino-conversation-actions"
+            aria-label="${isEnglish() ? "Conversation options" : "कुराकानी विकल्प"}"
+          ></div>
+
+        </header>
+
+        <div
+          class="saino-messages"
+          data-saino-messages="${escapeHTML(conversation?.id || "")}"
+          aria-live="polite"
+        ></div>
+
+        <div
+          class="saino-conversation-mount"
+          data-saino-conversation-mount
+        ></div>
+
+      </section>
+    `;
+  }
+
+  /* MAIN APPLICATION */
 
   function renderAuthenticated(user) {
     const host = root();
@@ -229,15 +408,21 @@
     const english = isEnglish();
     const email = escapeHTML(user?.email || "");
 
-    host.className = "saino-app";
+    const activeView = activeConversation
+      ? renderConversationPanel(activeConversation)
+      : renderWelcomePanel();
+
+    host.className =
+      `saino-app${activeConversation ? " chat-open" : ""}`;
 
     host.innerHTML = `
+
       <aside class="saino-sidebar">
 
         <header class="saino-sidebar-header">
 
           <div class="saino-brand">
-            <span class="saino-brand-mark">S</span>
+            <span class="saino-brand-mark" aria-hidden="true">S</span>
             <span>Saino</span>
           </div>
 
@@ -247,7 +432,8 @@
               class="saino-icon-button"
               type="button"
               data-action="toggle-language"
-              aria-label="Change language"
+              aria-label="${english ? "Change language" : "भाषा परिवर्तन"}"
+              title="${english ? "Change language" : "भाषा परिवर्तन"}"
             >
               ${english ? "ने" : "EN"}
             </button>
@@ -256,7 +442,8 @@
               class="saino-icon-button"
               type="button"
               data-action="logout"
-              aria-label="Log out"
+              aria-label="${escapeHTML(t("logout", "Log out", "लगआउट"))}"
+              title="${escapeHTML(t("logout", "Log out", "लगआउट"))}"
             >
               ↪
             </button>
@@ -265,77 +452,58 @@
         </header>
 
         <div class="saino-search">
+
+          <span class="saino-search-icon" aria-hidden="true">⌕</span>
+
           <input
             type="search"
-            disabled
-            placeholder="${english ? "Search chats" : "च्याट खोज्नुहोस्"}"
+            placeholder="${escapeHTML(t("search", "Search", "खोज्नुहोस्"))}"
+            aria-label="${escapeHTML(t("search", "Search chats", "च्याट खोज्नुहोस्"))}"
+            autocomplete="off"
           >
+
         </div>
 
-        <nav class="saino-tabs" aria-label="Main navigation">
-
-          <button class="saino-tab active" type="button">
-            ${english ? "Chats" : "च्याट"}
+        <nav
+          class="saino-tabs"
+          aria-label="${english ? "Main navigation" : "मुख्य नेभिगेसन"}"
+        >
+          <button
+            class="saino-tab active"
+            type="button"
+            aria-current="page"
+          >
+            ${escapeHTML(t("chats", "Chats", "च्याट"))}
           </button>
-
-          <button class="saino-tab" type="button" disabled>
-            ${english ? "Updates" : "अपडेट"}
-          </button>
-
-          <button class="saino-tab" type="button" disabled>
-            ${english ? "Friends" : "साथीहरू"}
-          </button>
-
         </nav>
 
-        <div class="saino-chat-list">
+        <div
+          class="saino-chat-list"
+          aria-label="${escapeHTML(t("chats", "Chats", "च्याट"))}"
+        ></div>
 
-          <div class="saino-empty-state">
-            <div class="saino-empty-icon">S</div>
+        <footer
+          class="saino-sidebar-footer"
+          title="${email}"
+        >
+          <span class="saino-user-dot" aria-hidden="true"></span>
+          <span class="saino-user-email">${email}</span>
+        </footer>
 
-            <h2>
-              ${
-                english
-                  ? "Your chats will appear here"
-                  : "तपाईंका च्याट यहाँ देखिनेछन्"
-              }
-            </h2>
-
-            <p>
-              ${
-                english
-                  ? "Chat list is the next module being connected."
-                  : "च्याट सूची अर्को चरणमा जोडिँदैछ।"
-              }
-            </p>
-          </div>
-
-        </div>
       </aside>
 
-      <section
-        class="saino-conversation"
-        style="display:flex;align-items:center;justify-content:center;padding:24px;text-align:center"
-      >
-
-        <div class="saino-empty-state">
-
-          <div class="saino-empty-icon">S</div>
-
-          <h2>
-            ${english ? "Welcome to Saino" : "Saino मा स्वागत छ"}
-          </h2>
-
-          <p>
-            ${english ? "You are signed in as" : "तपाईं लगइन हुनुहुन्छ"}
-            <br>
-            <strong>${email}</strong>
-          </p>
-
-        </div>
-      </section>
+      ${activeView}
     `;
+
+    global.dispatchEvent(new CustomEvent("saino:app-ready", {
+      detail: {
+        user,
+        conversation: activeConversation
+      }
+    }));
   }
+
+  /* AUTH FORM SUBMIT */
 
   async function handleSubmit(event) {
     const form = event.target.closest(
@@ -373,9 +541,9 @@
       return;
     }
 
-    const auth = global.KSKSupabaseAuth;
+    const service = auth();
 
-    if (!auth) {
+    if (!service) {
       setStatus(
         isEnglish()
           ? "Authentication service is unavailable."
@@ -389,12 +557,12 @@
     setBusy(true);
 
     setStatus(
-      isEnglish() ? "Please wait…" : "कृपया पर्खनुहोस्…"
+      t("loading", "Please wait…", "कृपया पर्खनुहोस्…")
     );
 
     try {
       if (mode === "signup") {
-        const result = await auth.signUp(email, password);
+        const result = await service.signUp(email, password);
 
         if (result?.confirmationRequired) {
           mode = "login";
@@ -409,7 +577,7 @@
           return;
         }
       } else {
-        await auth.signIn(email, password);
+        await service.signIn(email, password);
       }
 
     } catch (error) {
@@ -428,6 +596,8 @@
     }
   }
 
+  /* BUTTON ACTIONS */
+
   async function handleClick(event) {
     const button = event.target.closest("[data-action]");
 
@@ -438,13 +608,10 @@
     if (action === "toggle-language") {
       language()?.toggleLanguage?.();
 
-      const user = global.KSKSupabaseAuth?.getUser?.();
+      const user = auth()?.getUser?.();
 
-      if (user) {
-        renderAuthenticated(user);
-      } else {
-        renderAuth();
-      }
+      if (user) renderAuthenticated(user);
+      else renderAuth();
 
       return;
     }
@@ -453,7 +620,19 @@
       mode = mode === "login" ? "signup" : "login";
 
       statusMessage = "";
+      statusType = "info";
+
       renderAuth();
+
+      return;
+    }
+
+    if (action === "back-to-chats") {
+      activeConversation = null;
+
+      const user = auth()?.getUser?.();
+
+      if (user) renderAuthenticated(user);
 
       return;
     }
@@ -479,7 +658,7 @@
       button.disabled = true;
 
       try {
-        await global.KSKSupabaseAuth.resetPassword(email);
+        await auth().resetPassword(email);
 
         setStatus(
           isEnglish()
@@ -510,14 +689,26 @@
       button.disabled = true;
 
       try {
-        await global.KSKSupabaseAuth.signOut();
+        await auth().signOut();
+        activeConversation = null;
 
       } catch (error) {
-        console.error("Saino logout failed:", error);
+        showToast(
+          error?.message ||
+            (
+              isEnglish()
+                ? "Could not log out."
+                : "लगआउट हुन सकेन।"
+            ),
+          "error"
+        );
+
         button.disabled = false;
       }
     }
   }
+
+  /* APPLICATION BOOT */
 
   async function boot() {
     if (initialized) return;
@@ -530,14 +721,16 @@
     host.setAttribute("aria-busy", "true");
 
     try {
-      const auth = global.KSKSupabaseAuth;
+      const service = auth();
 
-      if (!auth) {
-        throw new Error("Authentication module did not load.");
+      if (!service) {
+        throw new Error(
+          "Authentication module did not load."
+        );
       }
 
-      const ready = await auth.initialize();
-      const user = auth.getUser();
+      const ready = await service.initialize();
+      const user = service.getUser();
 
       if (user) {
         renderAuthenticated(user);
@@ -573,17 +766,49 @@
     }
   }
 
+  /* GLOBAL EVENTS */
+
   document.addEventListener("submit", handleSubmit);
   document.addEventListener("click", handleClick);
+
+  global.addEventListener(
+    "saino:conversation-select",
+    event => {
+      const conversation = event.detail?.conversation;
+
+      if (!conversation) return;
+
+      activeConversation = conversation;
+
+      const user = auth()?.getUser?.();
+
+      if (user) renderAuthenticated(user);
+    }
+  );
+
+  global.addEventListener(
+    "saino:chat-list-updated",
+    event => {
+      if (!activeConversation) return;
+
+      const updated = (
+        event.detail?.conversations || []
+      ).find(item => item.id === activeConversation.id);
+
+      if (updated) activeConversation = updated;
+    }
+  );
 
   global.addEventListener("ksk:auth-change", event => {
     const user =
       event.detail?.user ||
-      global.KSKSupabaseAuth?.getUser?.();
+      auth()?.getUser?.();
 
     if (user) {
       renderAuthenticated(user);
+
     } else if (initialized) {
+      activeConversation = null;
       renderAuth();
     }
   });
@@ -595,24 +820,24 @@
 
     const user =
       event.detail?.user ||
-      global.KSKSupabaseAuth?.getUser?.();
+      auth()?.getUser?.();
 
     if (user) {
       renderAuthenticated(user);
+
     } else if (event.detail?.error) {
       renderAuth(event.detail.error);
     }
   });
 
   global.addEventListener("saino:language-change", () => {
-    const user = global.KSKSupabaseAuth?.getUser?.();
+    const user = auth()?.getUser?.();
 
-    if (user) {
-      renderAuthenticated(user);
-    } else if (initialized) {
-      renderAuth();
-    }
+    if (user) renderAuthenticated(user);
+    else if (initialized) renderAuth();
   });
+
+  /* START */
 
   function start() {
     if (
@@ -620,31 +845,29 @@
       !languageUnsubscribe
     ) {
       languageUnsubscribe = language().subscribe(() => {
-        const user = global.KSKSupabaseAuth?.getUser?.();
+        const user = auth()?.getUser?.();
 
-        if (user) {
-          renderAuthenticated(user);
-        } else if (initialized) {
-          renderAuth();
-        }
+        if (user) renderAuthenticated(user);
+        else if (initialized) renderAuth();
       });
     }
 
     boot();
   }
 
+  /* PUBLIC API */
+
   global.SainoApp = Object.freeze({
     initialize: start,
 
     render: () => {
-      const user = global.KSKSupabaseAuth?.getUser?.();
+      const user = auth()?.getUser?.();
 
-      if (user) {
-        renderAuthenticated(user);
-      } else {
-        renderAuth();
-      }
-    }
+      if (user) renderAuthenticated(user);
+      else renderAuth();
+    },
+
+    getActiveConversation: () => activeConversation
   });
 
   if (document.readyState === "loading") {
