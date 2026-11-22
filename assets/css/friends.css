@@ -1,0 +1,274 @@
+/* Saino Friends module */
+.saino-hidden {
+  display: none !important;
+}
+
+.saino-friends-page {
+  display: flex;
+  min-width: 0;
+  min-height: 100%;
+  flex: 1;
+  flex-direction: column;
+  overflow: auto;
+  background: var(--saino-bg);
+}
+
+.saino-friends-header {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  gap: 18px;
+  padding: 18px clamp(16px, 4vw, 48px);
+  border-bottom: 1px solid var(--saino-border);
+  background: var(--saino-surface);
+}
+
+.saino-friends-header h1 {
+  margin: 0;
+  color: var(--saino-text);
+  font-size: 23px;
+}
+
+.saino-friends-header p {
+  margin: 3px 0 0;
+  color: var(--saino-text-muted);
+  font-size: 13px;
+}
+
+.saino-friends-back,
+.saino-friends-reload {
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--saino-border);
+  border-radius: 22px;
+  background: var(--saino-surface);
+  color: var(--saino-text);
+}
+
+.saino-friends-back:hover,
+.saino-friends-reload:hover {
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-friends-reload {
+  width: 42px;
+  margin-left: auto;
+  padding: 0;
+  font-size: 21px;
+}
+
+.saino-friends-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 14px clamp(16px, 4vw, 48px);
+  border-bottom: 1px solid var(--saino-border);
+  background: var(--saino-surface);
+  scrollbar-width: thin;
+}
+
+.saino-friends-nav button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--saino-surface-muted);
+  color: var(--saino-text-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.saino-friends-nav button.active {
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-friends-count {
+  display: inline-grid;
+  min-width: 19px;
+  height: 19px;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 12px;
+  background: var(--saino-primary);
+  color: #fff;
+  font-size: 11px;
+}
+
+.saino-friends-content {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 22px clamp(14px, 4vw, 40px) 40px;
+}
+
+.saino-friends-content h2 {
+  margin: 18px 0 10px;
+  color: var(--saino-text);
+  font-size: 16px;
+}
+
+.saino-friends-content h2:first-child {
+  margin-top: 0;
+}
+
+.saino-friends-search {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 22px;
+}
+
+.saino-friends-search label {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.saino-friends-search input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--saino-border);
+  border-radius: 12px;
+  background: var(--saino-surface);
+  color: var(--saino-text);
+}
+
+.saino-friends-search input:focus {
+  border-color: var(--saino-primary);
+}
+
+.saino-friend-card {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 9px;
+  padding: 12px 14px;
+  border: 1px solid var(--saino-border);
+  border-radius: 14px;
+  background: var(--saino-surface);
+}
+
+.saino-friend-card .saino-avatar {
+  flex: 0 0 49px;
+}
+
+.saino-friend-card-info {
+  display: flex;
+  min-width: 80px;
+  flex: 1;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+
+.saino-friend-card-info strong {
+  color: var(--saino-text);
+  font-size: 14px;
+}
+
+.saino-friend-card-info small {
+  margin-top: 3px;
+  color: var(--saino-text-muted);
+  font-size: 11px;
+}
+
+.saino-friend-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.saino-friend-action {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--saino-border);
+  border-radius: 18px;
+  background: var(--saino-surface);
+  color: var(--saino-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.saino-friend-action.primary {
+  border-color: var(--saino-primary);
+  background: var(--saino-primary);
+  color: #fff;
+}
+
+.saino-friend-action.primary:hover {
+  background: var(--saino-primary-dark);
+}
+
+.saino-friend-action.secondary:hover {
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-friend-action.danger {
+  color: var(--saino-danger);
+}
+
+.saino-friend-action.danger:hover {
+  background: #fff0f0;
+}
+
+.saino-friends-empty {
+  padding: 28px 16px;
+  color: var(--saino-text-muted);
+  text-align: center;
+}
+
+.saino-friends-notice {
+  margin: 14px clamp(16px, 4vw, 48px) 0;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+  font-size: 13px;
+}
+
+.saino-friends-notice.error {
+  background: #fff0f0;
+  color: var(--saino-danger);
+}
+
+@media (max-width: 640px) {
+  .saino-friends-header {
+    min-height: 76px;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .saino-friends-header h1 {
+    font-size: 19px;
+  }
+
+  .saino-friends-nav {
+    padding: 10px 12px;
+  }
+
+  .saino-friend-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .saino-friend-card-info {
+    padding-top: 5px;
+  }
+
+  .saino-friend-actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 63px;
+  }
+
+  .saino-friends-content {
+    padding: 16px 12px 30px;
+  }
+}
