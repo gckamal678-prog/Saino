@@ -1,40 +1,40 @@
-
-"use strict";
-
-/*
- * SAINO — FRIENDS FRONTEND
- * File: assets/js/friends.js
- *
- * Uses:
- * window.KSKSupabaseFriends
- * window.KSKLanguage
- *
- * This module is standalone.
- * It will be connected to index.html later.
- */
-
+/* Saino Friends UI — uses the existing KSKSupabaseFriends API. */
 (function (global) {
   "use strict";
 
   if (global.SainoFriends) return;
 
-  const state = {
-    host: null,
-    tab: "suggestions",
-    users: [],
-    dashboard: null,
-    loading: false,
-    searchTerm: "",
-    busy: new Set(),
-    error: ""
-  };
-
   const service = () => global.KSKSupabaseFriends;
-  const language = () => global.KSKLanguage;
-  const english = () => language()?.getLanguage?.() === "en";
+  const root = () => document.getElementById("saino-app");
 
-  function t(key, en, ne) {
-    return language()?.t?.(key) || (english() ? en : ne);
+  let view = "chats";
+  let section = "discover";
+  let dashboard = emptyDashboard();
+  let suggestions = [];
+  let searchResults = [];
+  let searchTerm = "";
+  let searchTimer = null;
+  let loading = false;
+  let message = "";
+  let messageType = "info";
+  let relationships = {};
+
+  function emptyDashboard() {
+    return {
+      incoming: [],
+      outgoing: [],
+      friends: [],
+      followers: [],
+      following: [],
+      blocked: []
+    };
+  }
+
+  const english = () =>
+    global.KSKLanguage?.getLanguage?.() === "en";
+
+  function text(en, ne) {
+    return english() ? en : ne;
   }
 
   function escapeHTML(value) {
@@ -50,8 +50,7 @@
   function safeImageURL(value) {
     try {
       const url = new URL(String(value || ""), global.location.href);
-
-      return ["https:", "http:"].includes(url.protocol)
+      return url.protocol === "https:" || url.protocol === "http:"
         ? url.href
         : "";
     } catch (_) {
@@ -59,553 +58,402 @@
     }
   }
 
-  function showMessage(message, type = "info") {
-    if (!state.host) return;
-
-    const box = state.host.querySelector(
-      "[data-friends-message]"
-    );
-
-    if (!box) return;
-
-    box.textContent = message || "";
-    box.dataset.type = type;
-    box.hidden = !message;
-  }
-
-  function setBusy(key, value) {
-    if (value) {
-      state.busy.add(key);
-    } else {
-      state.busy.delete(key);
-    }
-
+  function notify(messageText, type = "info") {
+    message = messageText;
+    messageType = type;
     render();
   }
 
-  function avatar(user) {
-    const name = user?.name || "Saino User";
-    const url = safeImageURL(user?.avatarUrl);
+  function ensureNavigation() {
+    const nav = root()?.querySelector(".saino-tabs");
+    if (!nav || nav.querySelector("[data-saino-friends-tab]")) return;
 
-    if (url) {
-      return `
-        <img
-          src="${escapeHTML(url)}"
-          alt=""
-          loading="lazy"
-          referrerpolicy="no-referrer"
-        >`;
+    const button = document.createElement("button");
+    button.className = "saino-tab";
+    button.type = "button";
+    button.dataset.sainoFriendsTab = "true";
+    button.textContent = text("Friends", "साथीहरू");
+    button.addEventListener("click", openFriends);
+    nav.appendChild(button);
+
+    nav.querySelector(".saino-tab:not([data-saino-friends-tab])")
+      ?.addEventListener("click", openChats);
+  }
+
+  function openChats() {
+    view = "chats";
+    root()?.querySelector(".saino-friends-page")?.remove();
+
+    const app = root();
+    if (!app) return;
+
+    app.querySelector(".saino-sidebar")?.classList.remove("saino-hidden");
+    app.querySelector(".saino-conversation")?.classList.remove("saino-hidden");
+    app.querySelector("[data-saino-friends-tab]")?.classList.remove("active");
+    app.querySelector(".saino-tabs .saino-tab:not([data-saino-friends-tab])")
+      ?.classList.add("active");
+  }
+
+  async function openFriends() {
+    view = "friends";
+    section = "discover";
+    searchTerm = "";
+    searchResults = [];
+    message = "";
+
+    ensureNavigation();
+    render();
+
+    await loadData();
+  }
+
+  async function loadData() {
+    const api = service();
+    if (!api?.getDashboard) {
+      notify(
+        text("Friends service is unavailable.", "Friends सेवा उपलब्ध छैन।"),
+        "error"
+      );
+      return;
     }
 
-    return escapeHTML(Array.from(name.trim())[0] || "S");
+    loading = true;
+    message = "";
+    render();
+
+    const [dashboardResult, suggestionsResult] = await Promise.all([
+      api.getDashboard(),
+      api.getSuggestedUsers(8)
+    ]);
+
+    loading = false;
+
+    if (!dashboardResult?.ok) {
+      dashboard = emptyDashboard();
+      suggestions = [];
+      notify(
+        dashboardResult?.message ||
+          text("Could not load friends.", "साथीहरूको विवरण लोड गर्न सकिएन।"),
+        "error"
+      );
+      return;
+    }
+
+    dashboard = dashboardResult.data || emptyDashboard();
+    suggestions = suggestionsResult?.ok
+      ? (suggestionsResult.data || [])
+      : [];
+
+    await loadRelationships(allPeople().map(person => person.id));
+    render();
   }
 
-  function button(action, id, label, style = "secondary") {
-    const key = `${action}:${id}`;
-    const busy = state.busy.has(key);
-
-    return `
-      <button
-        type="button"
-        class="saino-button${style === "primary" ? "" : "-secondary"}"
-        data-friends-action="${escapeHTML(action)}"
-        data-id="${escapeHTML(id)}"
-        ${busy ? "disabled" : ""}
-      >
-        ${busy ? "…" : escapeHTML(label)}
-      </button>`;
+  function allPeople() {
+    return [
+      ...suggestions,
+      ...searchResults,
+      ...(dashboard.friends || []),
+      ...(dashboard.followers || []),
+      ...(dashboard.following || []),
+      ...(dashboard.blocked || []),
+      ...(dashboard.incoming || []).map(item => item.person),
+      ...(dashboard.outgoing || []).map(item => item.person)
+    ].filter(Boolean);
   }
 
-  function userCard(user, actions = "") {
+  async function loadRelationships(ids) {
+    if (!ids.length || !service()?.getRelationshipStatuses) {
+      relationships = {};
+      return;
+    }
+
+    const result = await service().getRelationshipStatuses(ids);
+    if (result?.ok) relationships = result.data || {};
+  }
+
+  function personCard(person, options = {}) {
+    if (!person) return "";
+
+    const id = escapeHTML(person.id || person.userId || "");
+    const name = person.name || text("Saino user", "Saino प्रयोगकर्ता");
+    const avatar = safeImageURL(person.avatarUrl);
+    const initial = Array.from(String(name).trim())[0] || "S";
+    const relation = relationships[person.id] || {};
+    const extraButtons = options.buttons || [];
+
+    const avatarMarkup = avatar
+      ? `<img src="${escapeHTML(avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+      : escapeHTML(initial);
+
+    const actions = extraButtons.length
+      ? extraButtons
+      : defaultActions(person, relation);
+
     return `
       <article class="saino-friend-card">
-        <div class="saino-avatar">
-          ${avatar(user)}
+        <div class="saino-avatar">${avatarMarkup}</div>
+        <div class="saino-friend-card-info">
+          <strong>${escapeHTML(name)}</strong>
+          ${person.createdAt
+            ? `<small>${escapeHTML(formatDate(person.createdAt))}</small>`
+            : ""}
         </div>
-
-        <div class="saino-friend-info">
-          <strong>${escapeHTML(user.name || "Saino User")}</strong>
-        </div>
-
         <div class="saino-friend-actions">
-          ${actions}
+          ${actions.join("")}
         </div>
       </article>`;
   }
 
-  function empty(message) {
+  function actionButton(action, id, label, style = "") {
     return `
-      <div class="saino-empty-state">
-        <p>${escapeHTML(message)}</p>
-      </div>`;
+      <button type="button"
+              class="saino-friend-action ${style}"
+              data-friends-action="${escapeHTML(action)}"
+              data-user-id="${escapeHTML(id)}">
+        ${escapeHTML(label)}
+      </button>`;
   }
 
-  function tabs() {
-    const items = [
-      ["suggestions", t("suggestions", "Suggestions", "सुझाव")],
-      ["friends", t("friends", "Friends", "साथीहरू")],
-      ["incoming", t("requests", "Requests", "अनुरोधहरू")],
-      ["outgoing", t("sentRequests", "Sent", "पठाइएका")]
-    ];
+  function defaultActions(person, relation) {
+    const id = person.id || person.userId;
+    if (!id) return [];
 
-    return `
-      <nav class="saino-friends-tabs" aria-label="Friends">
-        ${items.map(([id, label]) => `
-          <button
-            type="button"
-            class="saino-button-secondary${state.tab === id ? " active" : ""}"
-            data-friends-tab="${id}"
-            aria-pressed="${state.tab === id}"
-          >
-            ${escapeHTML(label)}
-          </button>
-        `).join("")}
-      </nav>`;
-  }
+    if (relation.blocked || relation.state === "blocked") {
+      return [actionButton(
+        "unblock",
+        id,
+        text("Unblock", "Unblock गर्नुहोस्"),
+        "secondary"
+      )];
+    }
 
-  function searchBox() {
-    return `
-      <form class="saino-friends-search" data-friends-search>
-        <input
-          type="search"
-          name="search"
-          maxlength="60"
-          value="${escapeHTML(state.searchTerm)}"
-          placeholder="${escapeHTML(
-            t("searchPeople", "Search people...", "मानिस खोज्नुहोस्...")
-          )}"
-          aria-label="${escapeHTML(
-            t("searchPeople", "Search people", "मानिस खोज्नुहोस्")
-          )}"
-        >
+    let mainAction;
 
-        <button class="saino-button" type="submit">
-          ${escapeHTML(t("search", "Search", "खोज्नुहोस्"))}
-        </button>
-      </form>`;
-  }
-
-  function renderUsers() {
-    const users = state.users || [];
-
-    if (!users.length) {
-      return empty(
-        state.searchTerm
-          ? t("noResults", "No users found.", "प्रयोगकर्ता भेटिएन।")
-          : t("noSuggestions", "No suggestions available.", "अहिले कुनै सुझाव छैन।")
+    if (relation.state === "pending_sent") {
+      mainAction = actionButton(
+        "cancel-request",
+        relation.requestId,
+        text("Cancel request", "Request रद्द"),
+        "secondary"
+      );
+    } else if (relation.state === "pending_received") {
+      mainAction = actionButton(
+        "accept-request",
+        relation.requestId,
+        text("Accept", "स्वीकार"),
+        "primary"
+      );
+    } else if (relation.state === "friend") {
+      mainAction = actionButton(
+        "remove-friend",
+        id,
+        text("Remove friend", "साथी हटाउनुहोस्"),
+        "secondary"
+      );
+    } else {
+      mainAction = actionButton(
+        "send-request",
+        id,
+        text("Add friend", "साथी बनाउनुहोस्"),
+        "primary"
       );
     }
 
-    return users.map(user => {
-      const id = user.id || user.userId;
+    const followAction = relation.following
+      ? actionButton("unfollow", id, text("Unfollow", "Unfollow"), "secondary")
+      : actionButton("follow", id, text("Follow", "Follow"), "secondary");
 
-      return userCard(
-        user,
-        button(
-          "send-request",
-          id,
-          t("addFriend", "Add friend", "साथी बनाउनुहोस्"),
-          "primary"
-        )
-      );
+    return [
+      mainAction,
+      followAction,
+      actionButton("block", id, text("Block", "Block"), "danger")
+    ];
+  }
+
+  function formatDate(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleDateString(
+      english() ? "en" : "ne",
+      { day: "numeric", month: "short", year: "numeric" }
+    );
+  }
+
+  function sectionLabel(key) {
+    const labels = {
+      discover: ["Discover", "खोज्नुहोस्"],
+      friends: ["My friends", "मेरा साथीहरू"],
+      requests: ["Requests", "Request"],
+      following: ["Following", "Following"],
+      followers: ["Followers", "Followers"],
+      blocked: ["Blocked", "Block गरिएका"]
+    };
+
+    return text(...labels[key]);
+  }
+
+  function renderPeople(items) {
+    if (!items?.length) {
+      return `<div class="saino-friends-empty">
+        ${escapeHTML(text("Nothing here yet.", "यहाँ अहिले केही छैन।"))}
+      </div>`;
+    }
+
+    return items.map(person => personCard(person)).join("");
+  }
+
+  function requestPeople(items, type) {
+    if (!items?.length) {
+      return `<div class="saino-friends-empty">
+        ${escapeHTML(text("No requests.", "कुनै Request छैन।"))}
+      </div>`;
+    }
+
+    return items.map(item => {
+      const person = item.person;
+      const buttons = type === "incoming"
+        ? [
+            actionButton("accept-request", item.id, text("Accept", "स्वीकार"), "primary"),
+            actionButton("reject-request", item.id, text("Decline", "अस्वीकार"), "secondary")
+          ]
+        : [
+            actionButton("cancel-request", item.id, text("Cancel", "रद्द"), "secondary")
+          ];
+
+      return personCard(person, { buttons });
     }).join("");
   }
 
-  function renderFriends() {
-    const people = state.dashboard?.friends || [];
+  function currentContent() {
+    if (section === "discover") {
+      const results = searchTerm.trim()
+        ? searchResults
+        : suggestions;
 
-    if (!people.length) {
-      return empty(
-        t("noFriends", "You have no friends yet.", "अहिलेसम्म साथी छैनन्।")
-      );
-    }
-
-    return people.map(user => userCard(
-      user,
-      `
-        ${button(
-          "follow",
-          user.id,
-          t("follow", "Follow", "फलो गर्नुहोस्")
-        )}
-        ${button(
-          "remove-friend",
-          user.id,
-          t("removeFriend", "Remove", "हटाउनुहोस्")
-        )}
-      `
-    )).join("");
-  }
-
-  function renderIncoming() {
-    const requests = state.dashboard?.incoming || [];
-
-    if (!requests.length) {
-      return empty(
-        t("noRequests", "No pending requests.", "कुनै अनुरोध आएको छैन।")
-      );
-    }
-
-    return requests.map(request => userCard(
-      request.person,
-      `
-        ${button(
-          "accept",
-          request.id,
-          t("accept", "Accept", "स्वीकार"),
-          "primary"
-        )}
-        ${button(
-          "reject",
-          request.id,
-          t("reject", "Reject", "अस्वीकार")
-        )}
-      `
-    )).join("");
-  }
-
-  function renderOutgoing() {
-    const requests = state.dashboard?.outgoing || [];
-
-    if (!requests.length) {
-      return empty(
-        t("noSentRequests", "No sent requests.", "पठाइएको अनुरोध छैन।")
-      );
-    }
-
-    return requests.map(request => userCard(
-      request.person,
-      button(
-        "cancel-request",
-        request.id,
-        t("cancel", "Cancel", "रद्द गर्नुहोस्")
-      )
-    )).join("");
-  }
-
-  function renderContent() {
-    if (state.loading) {
-      return empty(t("loading", "Loading...", "लोड हुँदैछ..."));
-    }
-
-    if (state.error) {
       return `
-        <div class="saino-empty-state">
-          <p>${escapeHTML(state.error)}</p>
-          <button
-            type="button"
-            class="saino-button-secondary"
-            data-friends-action="refresh"
-          >
-            ${escapeHTML(t("retry", "Try again", "फेरि प्रयास गर्नुहोस्"))}
-          </button>
-        </div>`;
+        <div class="saino-friends-search">
+          <label for="saino-friends-search">
+            ${escapeHTML(text("Find people", "मानिस खोज्नुहोस्"))}
+          </label>
+          <input id="saino-friends-search"
+                 type="search"
+                 value="${escapeHTML(searchTerm)}"
+                 placeholder="${escapeHTML(text("Search by name…", "नामबाट खोज्नुहोस्…"))}"
+                 autocomplete="off">
+        </div>
+        <h2>${escapeHTML(searchTerm
+          ? text("Search results", "खोज परिणाम")
+          : text("People you may know", "चिनजान हुन सक्ने व्यक्तिहरू"))}</h2>
+        ${loading && !results.length
+          ? `<p class="saino-friends-empty">${escapeHTML(text("Loading…", "लोड हुँदैछ…"))}</p>`
+          : renderPeople(results)}`;
     }
 
-    switch (state.tab) {
-      case "friends":
-        return renderFriends();
-
-      case "incoming":
-        return renderIncoming();
-
-      case "outgoing":
-        return renderOutgoing();
-
-      default:
-        return renderUsers();
+    if (section === "requests") {
+      return `
+        <h2>${escapeHTML(text("Received", "प्राप्त भएका"))}</h2>
+        ${requestPeople(dashboard.incoming, "incoming")}
+        <h2>${escapeHTML(text("Sent", "पठाइएका"))}</h2>
+        ${requestPeople(dashboard.outgoing, "outgoing")}`;
     }
+
+    const map = {
+      friends: dashboard.friends,
+      following: dashboard.following,
+      followers: dashboard.followers,
+      blocked: dashboard.blocked
+    };
+
+    return renderPeople(map[section] || []);
   }
 
   function render() {
-    const host = state.host;
+    const app = root();
+    if (!app || view !== "friends") return;
 
-    if (!host) return;
+    ensureNavigation();
 
-    host.innerHTML = `
-      <section class="saino-friends">
+    app.querySelector(".saino-sidebar")?.classList.add("saino-hidden");
+    app.querySelector(".saino-conversation")?.classList.add("saino-hidden");
+    app.querySelector("[data-saino-friends-tab]")?.classList.add("active");
+    app.querySelector(".saino-tabs .saino-tab:not([data-saino-friends-tab])")
+      ?.classList.remove("active");
 
-        <header class="saino-friends-header">
-          <h2>
-            ${escapeHTML(t("friends", "Friends", "साथीहरू"))}
-          </h2>
-        </header>
+    let page = app.querySelector(".saino-friends-page");
+    if (!page) {
+      page = document.createElement("section");
+      page.className = "saino-friends-page";
+      page.setAttribute("aria-label", text("Friends", "साथीहरू"));
+      app.appendChild(page);
+    }
 
-        ${searchBox()}
+    const sections = [
+      "discover", "friends", "requests", "following", "followers", "blocked"
+    ];
 
-        <div
-          class="saino-friends-message"
-          data-friends-message
-          role="status"
-          hidden
-        ></div>
-
-        ${tabs()}
-
-        <div class="saino-friends-list">
-          ${renderContent()}
+    page.innerHTML = `
+      <header class="saino-friends-header">
+        <button type="button"
+                class="saino-friends-back"
+                data-friends-action="back">
+          ‹ ${escapeHTML(text("Chats", "च्याट"))}
+        </button>
+        <div>
+          <h1>${escapeHTML(text("Friends", "साथीहरू"))}</h1>
+          <p>${escapeHTML(text("Connect with people on Saino.", "Saino मा मानिसहरूसँग जोडिनुहोस्।"))}</p>
         </div>
+        <button type="button"
+                class="saino-friends-reload"
+                data-friends-action="reload"
+                aria-label="${escapeHTML(text("Refresh", "फेरि लोड गर्नुहोस्"))}">↻</button>
+      </header>
 
-      </section>`;
+      <nav class="saino-friends-nav"
+           aria-label="${escapeHTML(text("Friends sections", "साथीहरूका खण्ड"))}">
+        ${sections.map(key => `
+          <button type="button"
+                  class="${key === section ? "active" : ""}"
+                  data-friends-section="${key}">
+            ${escapeHTML(sectionLabel(key))}
+            ${key === "requests" && dashboard.incoming?.length
+              ? `<span class="saino-friends-count">${dashboard.incoming.length}</span>`
+              : ""}
+          </button>`).join("")}
+      </nav>
+
+      ${message ? `<p class="saino-friends-notice ${escapeHTML(messageType)}"
+                      role="status">${escapeHTML(message)}</p>` : ""}
+
+      <main class="saino-friends-content">
+        ${currentContent()}
+      </main>`;
   }
 
-  async function loadDashboard() {
-    const api = service();
+  async function searchUsers(term) {
+    searchTerm = term;
+    searchResults = [];
 
-    if (!api?.getDashboard) {
-      state.error = t(
-        "friendsUnavailable",
-        "Friends service is unavailable.",
-        "साथी सेवा उपलब्ध छैन।"
-      );
-      return;
-    }
-
-    const response = await api.getDashboard();
-
-    if (!response?.ok) {
-      state.error = response?.message || t(
-        "genericError",
-        "Something went wrong.",
-        "केही समस्या भयो।"
-      );
-      return;
-    }
-
-    state.dashboard = response.data || {};
-    state.error = "";
-  }
-
-  async function loadSuggestions() {
-    const api = service();
-
-    const response = state.searchTerm
-      ? await api.searchUsers(state.searchTerm, { limit: 20 })
-      : await api.getSuggestedUsers(8);
-
-    if (!response?.ok) {
-      state.error = response?.message || t(
-        "genericError",
-        "Something went wrong.",
-        "केही समस्या भयो।"
-      );
-      state.users = [];
-      return;
-    }
-
-    state.users = response.data || [];
-    state.error = "";
-  }
-
-  async function refresh() {
-    if (!state.host) return;
-
-    state.loading = true;
-    state.error = "";
-    render();
-
-    try {
-      await loadDashboard();
-
-      if (!state.error && state.tab === "suggestions") {
-        await loadSuggestions();
-      }
-    } catch (error) {
-      state.error = error?.message || t(
-        "genericError",
-        "Something went wrong.",
-        "केही समस्या भयो।"
-      );
-    }
-
-    state.loading = false;
-    render();
-  }
-
-  async function runAction(action, id) {
-    const api = service();
-
-    if (!api) {
-      showMessage(
-        t("friendsUnavailable", "Friends service is unavailable.", "साथी सेवा उपलब्ध छैन।"),
-        "error"
-      );
-      return;
-    }
-
-    const key = `${action}:${id || ""}`;
-
-    if (state.busy.has(key)) return;
-
-    setBusy(key, true);
-
-    let response;
-
-    try {
-      switch (action) {
-        case "send-request":
-          response = await api.sendFriendRequest(id);
-          break;
-
-        case "accept":
-          response = await api.respondToFriendRequest(id, "accepted");
-          break;
-
-        case "reject":
-          response = await api.respondToFriendRequest(id, "rejected");
-          break;
-
-        case "cancel-request":
-          response = await api.cancelFriendRequest(id);
-          break;
-
-        case "remove-friend":
-          response = await api.removeFriend(id);
-          break;
-
-        case "follow":
-          response = await api.followUser(id);
-          break;
-
-        case "refresh":
-          await refresh();
-          return;
-
-        default:
-          return;
-      }
-
-      if (!response?.ok) {
-        showMessage(
-          response?.message || t(
-            "genericError",
-            "Action failed.",
-            "कार्य सफल भएन।"
-          ),
-          "error"
-        );
-        return;
-      }
-
-      showMessage(
-        t("updated", "Updated successfully.", "सफलतापूर्वक अपडेट भयो।"),
-        "success"
-      );
-
-      await refresh();
-
-    } catch (error) {
-      showMessage(
-        error?.message || t(
-          "genericError",
-          "Something went wrong.",
-          "केही समस्या भयो।"
-        ),
-        "error"
-      );
-    } finally {
-      state.busy.delete(key);
+    if (term.trim().length < 2) {
       render();
-    }
-  }
-
-  function handleClick(event) {
-    const tab = event.target.closest("[data-friends-tab]");
-
-    if (tab) {
-      state.tab = tab.dataset.friendsTab;
-      state.searchTerm = "";
-      refresh();
       return;
     }
 
-    const button = event.target.closest("[data-friends-action]");
-
-    if (button) {
-      runAction(
-        button.dataset.friendsAction,
-        button.dataset.id || ""
-      );
-    }
-  }
-
-  async function handleSearch(event) {
-    if (!event.target.matches("[data-friends-search]")) return;
-
-    event.preventDefault();
-
-    const input = event.target.querySelector(
-      'input[name="search"]'
-    );
-
-    state.searchTerm = String(input?.value || "").trim();
-    state.tab = "suggestions";
-
-    if (state.searchTerm.length > 0 &&
-        state.searchTerm.length < 2) {
-      showMessage(
-        t("searchTooShort", "Enter at least 2 characters.", "कम्तीमा २ अक्षर लेख्नुहोस्।"),
-        "error"
-      );
+    const result = await service().searchUsers(term, { limit: 20 });
+    if (!result?.ok) {
+      notify(result?.message || text("Search failed.", "खोज गर्न सकिएन।"), "error");
       return;
     }
 
-    await refresh();
+    searchResults = result.data || [];
+    await loadRelationships(searchResults.map(person => person.id));
+    render();
   }
 
-  function mount(host) {
-    if (typeof host === "string") {
-      host = document.querySelector(host);
-    }
+  async function runAction(button) {
+    const action = button.dataset.friendsAction;
+    const id = button.dataset.userId;
+    const api = service();
 
-    if (!host || !(host instanceof Element)) {
-      return {
-        ok: false,
-        message: "A valid friends container is required."
-      };
-    }
-
-    unmount();
-
-    state.host = host;
-    state.tab = "suggestions";
-    state.searchTerm = "";
-    state.users = [];
-    state.dashboard = null;
-
-    host.addEventListener("click", handleClick);
-    host.addEventListener("submit", handleSearch);
-
-    global.addEventListener("ksk:friends-cloud-change", refresh);
-    global.addEventListener("ksk:auth-change", refresh);
-    global.addEventListener("ksk:language-change", render);
-
-    refresh();
-
-    return {
-      ok: true,
-      refresh,
-      destroy: unmount
-    };
-  }
-
-  function unmount() {
-    if (state.host) {
-      state.host.removeEventListener("click", handleClick);
-      state.host.removeEventListener("submit", handleSearch);
-    }
-
-    global.removeEventListener("ksk:friends-cloud-change", refresh);
-    global.removeEventListener("ksk:auth-change", refresh);
-    global.removeEventListener("ksk:language-change", render);
-
-    state.host = null;
-  }
-
-  global.SainoFriends = Object.freeze({
-    mount,
-    unmount,
-    refresh
-  });
-
-})(window);
+    if (action === "back") return openChats();*
+
