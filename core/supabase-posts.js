@@ -1,0 +1,1085 @@
+
+"use strict";
+
+/*
+ * MERO SANSAR — SUPABASE POSTS ADAPTER
+ *
+ * Responsibilities:
+ * - Authenticated feed and own posts
+ * - Saved posts from Supabase
+ * - Create, update and delete posts
+ * - Private Storage image upload
+ * - Signed media URLs with expiry cache
+ * - Realtime post and comment changes
+ *
+ * Dependencies:
+ * - core/supabase-auth.js
+ * - core/supabase-profile.js
+ *
+ * Tables / Storage:
+ * - public.posts
+ * - public.profiles
+ * - public.post_comments
+ * - public.saved_posts
+ * - posts-media
+ */
+
+(function (global) {
+  "use strict";
+
+  if (global.KSKSupabasePosts) return;
+
+  const TABLE = "posts";
+  const BUCKET = "posts-media";
+
+  const MAX_CONTENT_LENGTH = 10000;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const SIGNED_URL_SECONDS = 3600;
+  const SIGNED_URL_REFRESH_MARGIN = 30000;
+  const COMMENT_COUNT_PAGE_SIZE = 1000;
+
+  const ALLOWED_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif"
+  ];
+
+  const SELECT_COLUMNS = [
+    "id",
+    "user_id",
+    "content",
+    "media_path",
+    "media_mime_type",
+    "author_name",
+    "author_avatar_url",
+    "created_at",
+    "updated_at"
+  ].join(",");
+
+  const SIGNED_URL_CACHE = new Map();
+
+  let realtimeChannel = null;
+  let realtimeUserId = "";
+  let realtimeStarting = false;
+
+  function getAuth() {
+    return global.KSKSupabaseAuth || null;
+  }
+
+  function makeResult(ok, code, data = null, message = "") {
+    return { ok, code, data, message };
+  }
+
+  function getErrorMessage(error) {
+    return String(
+      error?.message ||
+      error?.details ||
+      error?.hint ||
+      "पोस्टसम्बन्धी काम पूरा गर्न सकिएन।"
+    );
+  }
+
+  function dispatchPostChange(detail = {}) {
+    global.dispatchEvent(
+      new CustomEvent("ksk:posts-cloud-change", {
+        detail
+      })
+    );
+  }
+
+  function clearSignedUrlCache() {
+    SIGNED_URL_CACHE.clear();
+  }
+
+  async function getContext() {
+    const auth = getAuth();
+
+    if (!auth) {
+      throw new Error("Supabase Authentication उपलब्ध छैन।");
+    }
+
+    if (typeof auth.initialize !== "function") {
+      throw new Error("Supabase Auth Initialization उपलब्ध छैन।");
+    }
+
+    const initialized = await auth.initialize();
+
+    if (!initialized) {
+      throw new Error(
+        "Supabase Authentication सुरु हुन सकेन। फेरि प्रयास गर्नुहोस्।"
+      );
+    }
+
+    if (!auth.isAuthenticated?.()) {
+      throw new Error("पहिले आफ्नो खातामा लगइन गर्नुहोस्।");
+    }
+
+    const client = auth.getClient?.();
+    const user = auth.getUser?.();
+
+    if (!client || !user?.id) {
+      throw new Error(
+        "लगइन Session प्राप्त भएन। फेरि प्रयास गर्नुहोस्।"
+      );
+    }
+
+    return { client, user };
+  }
+
+  function cleanContent(value) {
+    const content = String(value ?? "").trim();
+
+    if (content.length > MAX_CONTENT_LENGTH) {
+      throw new Error(
+        `पोस्ट बढीमा ${MAX_CONTENT_LENGTH} अक्षरको हुनुपर्छ।`
+      );
+    }
+
+    return content;
+  }
+
+  function getFileExtension(file) {
+    const extensions = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif"
+    };
+
+    return extensions[
+      String(file?.type || "").toLowerCase()
+    ] || "";
+  }
+
+  function validateMedia(file) {
+    if (!file) return true;
+
+    if (!(file instanceof Blob)) {
+      throw new Error("फोटो फाइल सही छैन।");
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new Error(
+        "JPEG, PNG, WebP वा GIF फोटो मात्र प्रयोग गर्न सकिन्छ।"
+      );
+    }
+
+    if (file.size <= 0) {
+      throw new Error("फोटो खाली छ।");
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error("फोटोको आकार 10 MB भन्दा बढी हुनुहुँदैन।");
+    }
+
+    return true;
+  }
+
+  async function getAuthorProfile() {
+    const profileAPI = global.KSKSupabaseProfile;
+
+    if (!profileAPI?.getMyProfile) {
+      throw new Error("Supabase Profile सेवा उपलब्ध छैन।");
+    }
+
+    const profile = await profileAPI.getMyProfile();
+
+    if (!profile) {
+      throw new Error("आफ्नो प्रोफाइल प्राप्त गर्न सकिएन।");
+    }
+
+    const name = String(profile.name || "").trim();
+
+    if (!name) {
+      throw new Error(
+        "पोस्ट गर्नुअघि आफ्नो प्रोफाइलमा नाम राख्नुहोस्।"
+      );
+    }
+
+    return {
+      name: name.slice(0, 120),
+      avatar: String(profile.avatar || "").trim()
+    };
+  }
+
+  function createId() {
+    return global.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  async function uploadMedia(client, userId, file, postId) {
+    if (!file) return null;
+
+    validateMedia(file);
+
+    const extension = getFileExtension(file);
+
+    if (!extension) {
+      throw new Error("फोटोको प्रकार पहिचान गर्न सकिएन।");
+    }
+
+    const path =
+      `${userId}/${postId}/${createId()}.${extension}`;
+
+    const { data, error } = await client
+      .storage
+      .from(BUCKET)
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    return {
+      path: data?.path || path,
+      mimeType: file.type
+    };
+  }
+
+  async function getSignedMediaUrl(path, clientOverride = null) {
+    const mediaPath = String(path || "").trim();
+
+    if (!mediaPath) return "";
+
+    const cached = SIGNED_URL_CACHE.get(mediaPath);
+
+    if (
+      cached &&
+      cached.expiresAt > Date.now() + SIGNED_URL_REFRESH_MARGIN
+    ) {
+      return cached.url;
+    }
+
+    let client = clientOverride;
+
+    if (!client) {
+      const context = await getContext();
+      client = context.client;
+    }
+
+    const { data, error } = await client
+      .storage
+      .from(BUCKET)
+      .createSignedUrl(mediaPath, SIGNED_URL_SECONDS);
+
+    if (error) throw error;
+
+    const url = data?.signedUrl || "";
+
+    if (url) {
+      SIGNED_URL_CACHE.set(mediaPath, {
+        url,
+        expiresAt: Date.now() + SIGNED_URL_SECONDS * 1000
+      });
+    }
+
+    return url;
+  }
+
+  /* AUTHOR AVATAR LOOKUP */
+
+  async function getAuthorAvatarMap(rows, client) {
+    const userIds = [
+      ...new Set(
+        (rows || [])
+          .map(row => String(row?.user_id || "").trim())
+          .filter(Boolean)
+      )
+    ];
+
+    const avatarMap = new Map();
+
+    if (!userIds.length || !client) {
+      return avatarMap;
+    }
+
+    try {
+      const { data, error } = await client
+        .from("profiles")
+        .select("id,avatar_url")
+        .in("id", userIds);
+
+      if (error) throw error;
+
+      (data || []).forEach(profile => {
+        const id = String(profile?.id || "").trim();
+        const avatar = String(profile?.avatar_url || "").trim();
+
+        if (id && avatar) {
+          avatarMap.set(id, avatar);
+        }
+      });
+
+    } catch (error) {
+      console.warn(
+        "Author avatar lookup failed; using post snapshots:",
+        error
+      );
+    }
+
+    return avatarMap;
+  }
+
+  /* NORMALIZE SINGLE POST */
+
+  async function normalizePost(
+    row,
+    client,
+    avatarMap = null,
+    commentCount = 0
+  ) {
+    if (!row) return null;
+
+    let mediaUrl = "";
+
+    if (row.media_path) {
+      try {
+        mediaUrl = await getSignedMediaUrl(
+          row.media_path,
+          client
+        );
+      } catch (error) {
+        console.warn(
+          "Post media URL could not be created:",
+          error
+        );
+      }
+    }
+
+    const authorId = String(row.user_id || "").trim();
+
+    const currentAvatar = avatarMap instanceof Map
+      ? avatarMap.get(authorId)
+      : "";
+
+    const authorAvatar =
+      currentAvatar ||
+      String(row.author_avatar_url || "").trim();
+
+    return {
+      id: row.id,
+
+      author: row.author_name || "सदस्य",
+      authorId,
+      authorAvatar,
+      authorInitial: String(row.author_name || "स").charAt(0),
+
+      text: row.content || "",
+
+      mediaPath: row.media_path || "",
+      mediaType: row.media_mime_type || "",
+      mediaUrl,
+
+      createdAt: row.created_at || "",
+      updatedAt: row.updated_at || "",
+
+      likes: 0,
+      liked: false,
+      comments: [],
+
+      commentCount: Math.max(
+        0,
+        Number(commentCount) || 0
+      ),
+
+      reactionCounts: {}
+    };
+  }
+
+  /*
+   * LOAD COMMENT COUNTS IN BATCH
+   *
+   * A failed count query must be visible to the caller.
+   */
+
+  async function getCommentCountMap(rows, client) {
+    const postIds = [
+      ...new Set(
+        (rows || [])
+          .map(row => String(row?.id || "").trim())
+          .filter(Boolean)
+      )
+    ];
+
+    const countMap = new Map(
+      postIds.map(id => [id, 0])
+    );
+
+    if (!postIds.length) return countMap;
+
+    if (!client) {
+      throw new Error(
+        "Comment count लोड गर्न Supabase Client उपलब्ध छैन।"
+      );
+    }
+
+    let offset = 0;
+
+    try {
+      while (true) {
+        const { data, error } = await client
+          .from("post_comments")
+          .select("post_id")
+          .in("post_id", postIds)
+          .range(
+            offset,
+            offset + COMMENT_COUNT_PAGE_SIZE - 1
+          );
+
+        if (error) throw error;
+
+        const page = Array.isArray(data) ? data : [];
+
+        page.forEach(row => {
+          const id = String(row?.post_id || "");
+
+          if (countMap.has(id)) {
+            countMap.set(
+              id,
+              countMap.get(id) + 1
+            );
+          }
+        });
+
+        if (page.length < COMMENT_COUNT_PAGE_SIZE) {
+          break;
+        }
+
+        offset += COMMENT_COUNT_PAGE_SIZE;
+      }
+
+    } catch (error) {
+      console.error(
+        "Post comment counts could not be loaded:",
+        error
+      );
+
+      throw new Error(
+        "Comment count Database बाट लोड गर्न सकिएन: " +
+        getErrorMessage(error)
+      );
+    }
+
+    return countMap;
+  }
+
+  /* NORMALIZE FEED ROWS */
+
+  async function normalizeRows(rows, client) {
+    const sourceRows = Array.isArray(rows) ? rows : [];
+
+    const [avatarMap, commentCountMap] = await Promise.all([
+      getAuthorAvatarMap(sourceRows, client),
+      getCommentCountMap(sourceRows, client)
+    ]);
+
+    return Promise.all(
+      sourceRows.map(row => {
+        const id = String(row?.id || "");
+
+        return normalizePost(
+          row,
+          client,
+          avatarMap,
+          commentCountMap.get(id) || 0
+        );
+      })
+    );
+  }
+
+  /* REALTIME */
+
+  async function stopRealtime() {
+    const auth = getAuth();
+    const client = auth?.getClient?.();
+    const oldChannel = realtimeChannel;
+
+    realtimeChannel = null;
+    realtimeUserId = "";
+
+    if (oldChannel && client?.removeChannel) {
+      try {
+        await client.removeChannel(oldChannel);
+      } catch (error) {
+        console.warn("Posts Realtime cleanup failed:", error);
+      }
+    }
+
+    return true;
+  }
+
+  async function startRealtime() {
+    if (realtimeStarting) return false;
+
+    let context;
+
+    try {
+      context = await getContext();
+    } catch (_) {
+      await stopRealtime();
+      return false;
+    }
+
+    const { client, user } = context;
+
+    if (
+      realtimeChannel &&
+      realtimeUserId === user.id
+    ) {
+      return true;
+    }
+
+    realtimeStarting = true;
+
+    try {
+      await stopRealtime();
+
+      const channel = client
+        .channel("ksk-posts-live")
+
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: TABLE
+          },
+          payload => {
+            dispatchPostChange({
+              action: "realtime",
+              eventType: payload?.eventType || "",
+              postId:
+                payload?.new?.id ||
+                payload?.old?.id ||
+                ""
+            });
+          }
+        )
+
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "post_comments"
+          },
+          payload => {
+            dispatchPostChange({
+              action: "comment-realtime",
+              eventType: payload?.eventType || "",
+              postId:
+                payload?.new?.post_id ||
+                payload?.old?.post_id ||
+                ""
+            });
+          }
+        );
+
+      realtimeChannel = channel;
+      realtimeUserId = user.id;
+
+      const result = await channel.subscribe(status => {
+        if (status === "CHANNEL_ERROR") {
+          console.warn("Posts Realtime channel error.");
+        }
+
+        if (status === "TIMED_OUT") {
+          console.warn("Posts Realtime connection timed out.");
+        }
+
+        if (status === "SUBSCRIBED") {
+          console.info("Posts Realtime connected.");
+        }
+      });
+
+      return Boolean(result || realtimeChannel === channel);
+
+    } catch (error) {
+      console.warn("Posts Realtime could not start:", error);
+
+      realtimeChannel = null;
+      realtimeUserId = "";
+
+      return false;
+
+    } finally {
+      realtimeStarting = false;
+    }
+  }
+
+  /* INITIALIZE */
+
+  async function initialize() {
+    try {
+      const context = await getContext();
+
+      startRealtime().catch(error => {
+        console.warn("Posts Realtime startup failed:", error);
+      });
+
+      return Boolean(context.client && context.user?.id);
+
+    } catch (error) {
+      console.error(
+        "Supabase Posts initialization failed:",
+        error
+      );
+
+      return false;
+    }
+  }
+
+  /* READ FEED */
+
+  async function getFeed(options = {}) {
+    try {
+      const { client } = await getContext();
+
+      const requestedLimit = Number(options.limit || 50);
+
+      const limit = Math.min(
+        100,
+        Math.max(
+          1,
+          Number.isFinite(requestedLimit) ? requestedLimit : 50
+        )
+      );
+
+      let query = client
+        .from(TABLE)
+        .select(SELECT_COLUMNS)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit);
+
+      if (options.before) {
+        query = query.lt("created_at", options.before);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const posts = await normalizeRows(data, client);
+
+      return makeResult(true, "FEED_LOADED", posts);
+
+    } catch (error) {
+      console.error("Supabase Feed Load Failed:", error);
+
+      return makeResult(
+        false,
+        "FEED_LOAD_FAILED",
+        null,
+        getErrorMessage(error)
+      );
+    }
+  }
+
+  /* READ SAVED POSTS */
+
+  async function getSavedPosts(options = {}) {
+    try {
+      const { client, user } = await getContext();
+
+      const { data: savedRows, error: savedError } = await client
+        .from("saved_posts")
+        .select("post_id,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (savedError) throw savedError;
+
+      const savedIds = (Array.isArray(savedRows) ? savedRows : [])
+        .map(row => String(row?.post_id || "").trim())
+        .filter(Boolean);
+
+      if (!savedIds.length) {
+        return makeResult(true, "SAVED_POSTS_LOADED", []);
+      }
+
+      const uniqueIds = [...new Set(savedIds)];
+      const posts = [];
+      const batchSize = 100;
+
+      for (let offset = 0; offset < uniqueIds.length; offset += batchSize) {
+        const batch = uniqueIds.slice(offset, offset + batchSize);
+
+        const { data, error } = await client
+          .from(TABLE)
+          .select(SELECT_COLUMNS)
+          .in("id", batch);
+
+        if (error) throw error;
+
+        if (Array.isArray(data)) posts.push(...data);
+      }
+
+      const normalized = await normalizeRows(posts, client);
+
+      const orderMap = new Map(
+        uniqueIds.map((id, index) => [id, index])
+      );
+
+      normalized.sort((a, b) =>
+        (orderMap.get(String(a?.id || "")) ?? Number.MAX_SAFE_INTEGER) -
+        (orderMap.get(String(b?.id || "")) ?? Number.MAX_SAFE_INTEGER)
+      );
+
+      return makeResult(true, "SAVED_POSTS_LOADED", normalized);
+
+    } catch (error) {
+      console.error("Supabase Saved Posts Load Failed:", error);
+
+      return makeResult(
+        false,
+        "SAVED_POSTS_LOAD_FAILED",
+        null,
+        getErrorMessage(error)
+      );
+    }
+  }
+
+  /* READ MY POSTS */
+
+  async function getMyPosts(options = {}) {
+    try {
+      const { client, user } = await getContext();
+
+      const requestedLimit = Number(options.limit || 50);
+
+      const limit = Math.min(
+        100,
+        Math.max(
+          1,
+          Number.isFinite(requestedLimit) ? requestedLimit : 50
+        )
+      );
+
+      const { data, error } = await client
+        .from(TABLE)
+        .select(SELECT_COLUMNS)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      const posts = await normalizeRows(data, client);
+
+      return makeResult(true, "MY_POSTS_LOADED", posts);
+
+    } catch (error) {
+      console.error("My Posts Load Failed:", error);
+
+      return makeResult(
+        false,
+        "MY_POSTS_LOAD_FAILED",
+        null,
+        getErrorMessage(error)
+      );
+    }
+  }
+
+  /* CREATE POST */
+
+  async function createPost(input = {}) {
+    let uploadedPath = "";
+    let uploadClient = null;
+
+    try {
+      const { client, user } = await getContext();
+
+      uploadClient = client;
+
+      const content = cleanContent(input.text);
+      const file = input.media || null;
+
+      validateMedia(file);
+
+      if (!content && !file) {
+        throw new Error("केही लेख्नुहोस् वा फोटो थप्नुहोस्।");
+      }
+
+      const profile = await getAuthorProfile();
+      const postId = createId();
+
+      let media = null;
+
+      if (file) {
+        media = await uploadMedia(
+          client,
+          user.id,
+          file,
+          postId
+        );
+
+        uploadedPath = media.path;
+      }
+
+      const payload = {
+        id: postId,
+        user_id: user.id,
+        content,
+        media_path: media?.path || null,
+        media_mime_type: media?.mimeType || null,
+        author_name: profile.name,
+        author_avatar_url: profile.avatar || null
+      };
+
+      const { data, error } = await client
+        .from(TABLE)
+        .insert(payload)
+        .select(SELECT_COLUMNS)
+        .single();
+
+      if (error) throw error;
+
+      const post = await normalizePost(data, client);
+
+      dispatchPostChange({
+        action: "create",
+        post
+      });
+
+      return makeResult(
+        true,
+        "POST_CREATED",
+        post,
+        "पोस्ट सफलतापूर्वक प्रकाशित भयो।"
+      );
+
+    } catch (error) {
+      if (uploadedPath && uploadClient) {
+        try {
+          const { error: cleanupError } = await uploadClient
+            .storage
+            .from(BUCKET)
+            .remove([uploadedPath]);
+
+          if (cleanupError) {
+            console.warn(
+              "Failed upload cleanup:",
+              cleanupError
+            );
+          }
+
+        } catch (cleanupError) {
+          console.warn("Failed upload cleanup:", cleanupError);
+        }
+
+        SIGNED_URL_CACHE.delete(uploadedPath);
+      }
+
+      console.error("Post Creation Failed:", error);
+
+      return makeResult(
+        false,
+        "POST_CREATE_FAILED",
+        null,
+        getErrorMessage(error)
+      );
+    }
+  }
+
+  /* UPDATE POST */
+
+  async function updatePost(postId, changes = {}) {
+    try {
+      const { client, user } = await getContext();
+
+      const id = String(postId || "").trim();
+
+      if (!id) {
+        throw new Error("पोस्ट ID उपलब्ध छैन।");
+      }
+
+      const payload = {};
+
+      if (
+        Object.prototype.hasOwnProperty.call(changes, "text")
+      ) {
+        payload.content = cleanContent(changes.text);
+      }
+
+      if (!Object.keys(payload).length) {
+        throw new Error("अपडेट गर्न कुनै विवरण प्राप्त भएन।");
+      }
+
+      payload.updated_at = new Date().toISOString();
+
+      const { data, error } = await client
+        .from(TABLE)
+        .update(payload)
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select(SELECT_COLUMNS)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "पोस्ट भेटिएन वा सम्पादन गर्ने अनुमति छैन।"
+        );
+      }
+
+      const post = await normalizePost(data, client);
+
+      dispatchPostChange({
+        action: "update",
+        post,
+        postId: id
+      });
+
+      return makeResult(
+        true,
+        "POST_UPDATED",
+        post,
+        "पोस्ट अपडेट भयो।"
+      );
+
+    } catch (error) {
+      console.error("Post Update Failed:", error);
+
+      return makeResult(
+        false,
+        "POST_UPDATE_FAILED",
+        null,
+        getErrorMessage(error)
+      );
+    }
+  }
+
+  /* DELETE POST */
+
+  async function deletePost(postId) {
+    try {
+      const { client, user } = await getContext();
+
+      const id = String(postId || "").trim();
+
+      if (!id) {
+        throw new Error("पोस्ट ID उपलब्ध छैन।");
+      }
+
+      const { data, error } = await client
+        .from(TABLE)
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id,media_path")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "पोस्ट भेटिएन वा मेटाउने अनुमति छैन।"
+        );
+      }
+
+      if (data.media_path) {
+        try {
+          const { error: storageError } = await client
+            .storage
+            .from(BUCKET)
+            .remove([data.media_path]);
+
+          if (storageError) {
+            console.warn(
+              "Post deleted but media cleanup failed:",
+              storageError
+            );
+          }
+
+        } catch (cleanupError) {
+          console.warn(
+            "Post media cleanup failed:",
+            cleanupError
+          );
+        }
+
+        SIGNED_URL_CACHE.delete(data.media_path);
+      }
+
+      dispatchPostChange({
+        action: "delete",
+        postId: id
+      });
+
+      return makeResult(
+        true,
+        "POST_DELETED",
+        { id },
+        "पोस्ट मेटियो।"
+      );
+
+    } catch (error) {
+      console.error("Post Delete Failed:", error);
+
+      return makeResult(
+        false,
+        "POST_DELETE_FAILED",
+        null,
+        getErrorMessage(error)
+      );
+    }
+  }
+
+  /* AUTH CHANGE HANDLING */
+
+  global.addEventListener("ksk:auth-change", event => {
+    clearSignedUrlCache();
+
+    const user = event.detail?.user;
+
+    if (!user?.id) {
+      stopRealtime();
+      return;
+    }
+
+    startRealtime().catch(error => {
+      console.warn("Posts Realtime restart failed:", error);
+    });
+  });
+
+  global.addEventListener("ksk:auth-ready", event => {
+    const user = event.detail?.user;
+
+    if (user?.id) {
+      startRealtime().catch(error => {
+        console.warn("Posts Realtime startup failed:", error);
+      });
+    } else {
+      stopRealtime();
+    }
+  });
+
+  /* PUBLIC API */
+
+  global.KSKSupabasePosts = Object.freeze({
+    initialize,
+
+    getFeed,
+    getSavedPosts,
+    getMyPosts,
+
+    createPost,
+    updatePost,
+    deletePost,
+
+    getSignedMediaUrl,
+    clearSignedUrlCache,
+
+    startRealtime,
+    stopRealtime
+  });
+
+  console.info("KSK Supabase Posts Adapter loaded.");
+
+})(window);
