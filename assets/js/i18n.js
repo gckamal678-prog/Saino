@@ -15,6 +15,7 @@
       updates: "अपडेट",
       friends: "साथीहरू",
       messages: "सन्देशहरू",
+      conversation: "कुराकानी",
       newChat: "नयाँ च्याट",
       newGroup: "नयाँ समूह",
       messagePlaceholder: "सन्देश लेख्नुहोस्",
@@ -30,6 +31,8 @@
       welcomeBody: "आफ्ना साथीहरूसँग सुरक्षित र सजिलो तरिकाले कुराकानी सुरु गर्नुहोस्।",
       noChats: "अहिलेसम्म कुनै च्याट छैन।",
       noMessages: "अहिलेसम्म कुनै सन्देश छैन।",
+      messageDeleted: "सन्देश हटाइयो",
+      edited: "सम्पादन गरिएको",
       startConversation: "कुराकानी सुरु गर्नुहोस्",
       notifications: "सूचनाहरू",
       profile: "प्रोफाइल",
@@ -70,6 +73,7 @@
       updates: "Updates",
       friends: "Friends",
       messages: "Messages",
+      conversation: "Conversation",
       newChat: "New chat",
       newGroup: "New group",
       messagePlaceholder: "Type a message",
@@ -85,6 +89,8 @@
       welcomeBody: "Start a simple and secure conversation with your friends.",
       noChats: "No chats yet.",
       noMessages: "No messages yet.",
+      messageDeleted: "Message deleted",
+      edited: "edited",
       startConversation: "Start a conversation",
       notifications: "Notifications",
       profile: "Profile",
@@ -149,6 +155,7 @@
   function t(key, values = {}) {
     const dictionary = DICTIONARY[currentLanguage];
     const fallback = DICTIONARY.en;
+
     const template =
       dictionary[key] ?? fallback[key] ?? key;
 
@@ -253,7 +260,7 @@
         currentLanguage
       );
     } catch (_) {
-      // Current-page language still works without storage.
+      // Language still works without browser storage.
     }
 
     applyTranslations();
