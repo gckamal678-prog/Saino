@@ -276,7 +276,7 @@
         title="${t("Notifications", "सूचनाहरू")}"
         aria-expanded="false"
       >
-        ♧
+        🔔
         <span class="saino-notification-count" hidden>0</span>
       </button>
 
