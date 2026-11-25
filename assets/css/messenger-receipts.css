@@ -1,0 +1,25 @@
+
+/* Saino message delivery and read receipt states */
+
+.saino-message-status {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 2px;
+  color: #7b8b86;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: -2px;
+  white-space: nowrap;
+}
+
+.saino-message-status[data-state="read"] {
+  color: #2596be;
+}
+
+.saino-message-status[data-state="delivered"] {
+  color: #7b8b86;
+}
+
+.saino-message-status[data-state="sent"] {
+  color: #7b8b86;
+}
