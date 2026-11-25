@@ -1,0 +1,23 @@
+
+/* Saino chat online and typing status */
+
+.saino-conversation .saino-contact-status {
+  min-height: 16px;
+  color: var(--saino-muted, #667781);
+  font-size: 12px;
+  line-height: 1.3;
+  transition: color 160ms ease;
+}
+
+.saino-conversation .saino-contact-status[data-status="online"] {
+  color: #16a36a;
+}
+
+.saino-conversation .saino-contact-status[data-status="typing"] {
+  color: #16a36a;
+  font-style: italic;
+}
+
+.saino-conversation .saino-contact-status[data-status="offline"] {
+  color: var(--saino-muted, #667781);
+}
