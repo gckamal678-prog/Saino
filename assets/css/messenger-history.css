@@ -1,5 +1,5 @@
 
-/* Saino Older Message History */
+/* Saino Older Message History Pagination */
 
 .saino-history-load-button {
   display: block;
@@ -12,12 +12,20 @@
   background: var(--saino-surface, #ffffff);
   color: var(--saino-text, #333333);
   font-size: 12px;
+  line-height: 1.4;
   cursor: pointer;
-  transition: background 0.2s ease, opacity 0.2s ease;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .saino-history-load-button:hover {
   background: var(--saino-bg, #f2f4f3);
+}
+
+.saino-history-load-button:focus-visible {
+  outline: 2px solid var(--saino-primary, #075e54);
+  outline-offset: 2px;
 }
 
 .saino-history-load-button:disabled {
