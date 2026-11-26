@@ -85,6 +85,7 @@
     `;
   }
 
+  
   async function decorateMessages() {
     const host = getHost();
     const api = messagesApi();
@@ -103,7 +104,6 @@
 
     const messages = result.data;
 
-    // app.js renders messages in the same chronological order.
     rows.forEach((row, index) => {
       const message = messages[index];
       if (!message) return;
@@ -113,20 +113,32 @@
       const article = row.querySelector(".saino-message");
       if (!article) return;
 
-      row.querySelector(".saino-message-actions")?.remove();
+      const existingMenu = article.querySelector(
+        ".saino-message-actions"
+      );
 
-      const textOnly = (message.type || "text") === "text";
       const deleted = Boolean(
         message.deletedAt || message.deletedForEveryone
       );
 
-      if (!deleted) {
-        article.insertAdjacentHTML("beforeend", menuMarkup(message));
+      if (deleted) {
+        existingMenu?.remove();
+        return;
+      }
+
+      // पहिले नै मेनु छ भने फेरि नबनाउने।
+      // यसले MutationObserver को अनावश्यक refresh loop रोक्छ।
+      if (!existingMenu) {
+        article.insertAdjacentHTML(
+          "beforeend",
+          menuMarkup(message)
+        );
       }
     });
 
     await applyDeletedForMe(rows);
   }
+
 
   async function applyDeletedForMe(rows) {
     const auth = authApi();
