@@ -1,0 +1,30 @@
+
+/* Saino Older Message History */
+
+.saino-history-load-button {
+  display: block;
+  align-self: center;
+  max-width: 90%;
+  margin: 4px auto 12px;
+  padding: 9px 16px;
+  border: 1px solid var(--saino-border, #d8dedb);
+  border-radius: 20px;
+  background: var(--saino-surface, #ffffff);
+  color: var(--saino-text, #333333);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.saino-history-load-button:hover {
+  background: var(--saino-bg, #f2f4f3);
+}
+
+.saino-history-load-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.saino-history-load-button[hidden] {
+  display: none !important;
+}
