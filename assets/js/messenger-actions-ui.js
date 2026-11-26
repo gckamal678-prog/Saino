@@ -10,17 +10,9 @@
 
   let activeConversationId = "";
   let activeUserId = "";
-  let refreshQueued = false;
-  let refreshRunning = false;
-
-  const escapeHTML = value =>
-    String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[char]);
+  let refreshTimer = null;
+  let decorating = false;
+  let observer = null;
 
   function notify(message) {
     global.alert(message);
@@ -30,35 +22,40 @@
     if (!activeConversationId) return null;
 
     return document.querySelector(
-      `[data-saino-messages="${CSS.escape(activeConversationId)}"]`
+      `.saino-messages[data-saino-messages="${CSS.escape(activeConversationId)}"]`
     );
   }
 
   function closeMenus(except) {
-    document.querySelectorAll(".saino-message-actions-menu").forEach(menu => {
+    document.querySelectorAll(
+      ".saino-message-actions-menu"
+    ).forEach(menu => {
       if (menu !== except) {
         menu.hidden = true;
 
-        const trigger = menu.parentElement?.querySelector(
-          ".saino-message-actions-trigger"
-        );
-
-        trigger?.setAttribute("aria-expanded", "false");
+        menu.parentElement
+          ?.querySelector(".saino-message-actions-trigger")
+          ?.setAttribute("aria-expanded", "false");
       }
     });
   }
 
   function menuMarkup(message) {
     const own = message.fromMe === true;
-    const textOnly = (message.type || "text") === "text";
+
+    const textOnly =
+      (message.type || "text") === "text";
+
     const deleted = Boolean(
-      message.deletedAt || message.deletedForEveryone
+      message.deletedAt ||
+      message.deletedForEveryone
     );
 
     if (deleted) return "";
 
     return `
       <div class="saino-message-actions">
+
         <button
           type="button"
           class="saino-message-actions-trigger"
@@ -68,27 +65,32 @@
         >⋮</button>
 
         <div class="saino-message-actions-menu" hidden>
+
           ${textOnly ? `
-            <button type="button" data-message-action="copy">
-              Copy
-            </button>
+            <button
+              type="button"
+              data-message-action="copy"
+            >Copy</button>
           ` : ""}
 
           ${own && textOnly ? `
-            <button type="button" data-message-action="edit">
-              Edit
-            </button>
+            <button
+              type="button"
+              data-message-action="edit"
+            >Edit</button>
           ` : ""}
 
           ${textOnly ? `
-            <button type="button" data-message-action="forward">
-              Forward
-            </button>
+            <button
+              type="button"
+              data-message-action="forward"
+            >Forward</button>
           ` : ""}
 
-          <button type="button" data-message-action="delete-me">
-            Delete for me
-          </button>
+          <button
+            type="button"
+            data-message-action="delete-me"
+          >Delete for me</button>
 
           ${own && textOnly ? `
             <button
@@ -97,9 +99,29 @@
               data-message-action="delete-everyone"
             >Delete for everyone</button>
           ` : ""}
+
         </div>
       </div>
     `;
+  }
+
+  function applyMessageMetadata(row, message) {
+    row.dataset.messageId = message.id;
+    row.dataset.sainoMessageId = message.id;
+
+    row.dataset.messageFromMe = String(
+      Boolean(message.fromMe)
+    );
+
+    row.dataset.messageType =
+      message.type || "text";
+
+    row.dataset.messageDeleted = String(
+      Boolean(
+        message.deletedAt ||
+        message.deletedForEveryone
+      )
+    );
   }
 
   async function applyDeletedForMe(rows) {
@@ -120,7 +142,10 @@
       .in("message_id", ids);
 
     if (error) {
-      console.warn("Saino deletion lookup failed:", error);
+      console.warn(
+        "Saino message deletion lookup failed:",
+        error
+      );
       return;
     }
 
@@ -136,32 +161,38 @@
   }
 
   async function decorateMessages() {
-    if (refreshRunning) return;
+    if (decorating) return;
 
     const host = getHost();
     const api = messagesApi();
 
-    if (!host || !api?.getMessages || !activeUserId) return;
+    if (
+      !host ||
+      !api?.getMessages ||
+      !activeUserId
+    ) {
+      return;
+    }
 
-    const allRows = [
-      ...host.querySelectorAll(".saino-message-row")
+    const rows = [
+      ...host.querySelectorAll(":scope > .saino-message-row")
     ];
 
-    if (!allRows.length) return;
+    if (!rows.length) return;
 
-    refreshRunning = true;
+    decorating = true;
 
     try {
-      /*
-       * Pagination बाट आएका पुराना rows मा ID पहिल्यै हुन्छ।
-       * ID नभएका प्रारम्भिक rows मात्र पछिल्ला ५० messages सँग
-       * जोडिन्छन्।
-       */
-      const unassignedRows = allRows.filter(
+      const unassigned = rows.filter(
         row => !row.dataset.messageId
       );
 
-      if (unassignedRows.length) {
+      /*
+       * Positional mapping only when every row is unmapped.
+       * This prevents old paginated messages being attached
+       * to the wrong latest message.
+       */
+      if (unassigned.length === rows.length) {
         const result = await api.getMessages(
           activeConversationId,
           { limit: 50 }
@@ -170,109 +201,101 @@
         if (
           !result?.ok ||
           !Array.isArray(result.data) ||
-          getHost() !== host
+          result.data.length !== rows.length ||
+          host !== getHost()
         ) {
           return;
         }
 
-        const messages = result.data;
-
-        unassignedRows.forEach((row, index) => {
-          const message = messages[index];
-
-          if (!message) return;
-
-          row.dataset.messageId = message.id;
-
-          row.dataset.messageFromMe = String(
-            Boolean(message.fromMe)
+        rows.forEach((row, index) => {
+          applyMessageMetadata(
+            row,
+            result.data[index]
           );
-
-          row.dataset.messageType = message.type || "text";
-          row.dataset.messageDeleted = String(
-            Boolean(
-              message.deletedAt ||
-              message.deletedForEveryone
-            )
-          );
-
-          const article = row.querySelector(".saino-message");
-
-          if (!article) return;
-
-          if (message.deletedAt || message.deletedForEveryone) {
-            return;
-          }
-
-          if (
-            !article.querySelector(".saino-message-actions")
-          ) {
-            article.insertAdjacentHTML(
-              "beforeend",
-              menuMarkup(message)
-            );
-          }
         });
       }
 
-      /*
-       * History pagination बाट आएका rows को ID हुन्छ।
-       * ती rows मा आवश्यक metadata data attributes बाट लिइन्छ।
-       */
-      allRows.forEach(row => {
-        if (!row.dataset.messageId) return;
-
-        const article = row.querySelector(".saino-message");
+      rows.forEach(row => {
+        const article = row.querySelector(
+          ".saino-message"
+        );
 
         if (!article) return;
 
-        if (row.dataset.messageDeleted === "true") return;
+        const deleted =
+          row.dataset.messageDeleted === "true";
+
+        if (deleted) {
+          article.querySelector(
+            ".saino-message-actions"
+          )?.remove();
+
+          return;
+        }
 
         if (
-          article.querySelector(".saino-message-actions")
+          article.querySelector(
+            ".saino-message-actions"
+          )
         ) {
           return;
         }
 
-        if (!row.dataset.messageType) return;
-
-        const message = {
-          fromMe: row.dataset.messageFromMe === "true",
-          type: row.dataset.messageType
-        };
+        /*
+         * History Pagination module ले पुराना messages का
+         * metadata पहिल्यै राखेको हुन्छ।
+         */
+        if (
+          !row.dataset.messageId ||
+          !row.dataset.messageType
+        ) {
+          return;
+        }
 
         article.insertAdjacentHTML(
           "beforeend",
-          menuMarkup(message)
+          menuMarkup({
+            fromMe:
+              row.dataset.messageFromMe === "true",
+
+            type: row.dataset.messageType
+          })
         );
       });
 
-      await applyDeletedForMe(allRows);
+      await applyDeletedForMe(rows);
 
     } catch (error) {
-      console.error("Saino message actions:", error);
+      console.error(
+        "Saino message actions:",
+        error
+      );
     } finally {
-      refreshRunning = false;
+      decorating = false;
     }
   }
 
   function scheduleRefresh() {
-    if (refreshQueued) return;
+    if (refreshTimer !== null) {
+      global.clearTimeout(refreshTimer);
+    }
 
-    refreshQueued = true;
-
-    global.setTimeout(() => {
-      refreshQueued = false;
-
+    refreshTimer = global.setTimeout(() => {
+      refreshTimer = null;
       decorateMessages();
     }, 180);
   }
 
   async function copyMessage(messageId) {
-    const result = await messagesApi().copyMessage(messageId);
+    const result = await messagesApi().copyMessage(
+      messageId
+    );
 
     if (!result?.ok) {
-      notify(result?.message || "सन्देश Copy गर्न सकिएन।");
+      notify(
+        result?.message ||
+        "सन्देश Copy गर्न सकिएन।"
+      );
       return;
     }
 
@@ -280,8 +303,9 @@
   }
 
   async function editMessage(messageId, row) {
-    const textNode = row.querySelector(".saino-message-text");
-    const oldText = textNode?.textContent || "";
+    const oldText =
+      row.querySelector(".saino-message-text")
+        ?.textContent || "";
 
     const updated = global.prompt(
       "सन्देश सम्पादन गर्नुहोस्:",
@@ -305,7 +329,10 @@
     );
 
     if (!result?.ok) {
-      notify(result?.message || "सम्पादन गर्न सकिएन।");
+      notify(
+        result?.message ||
+        "सन्देश सम्पादन गर्न सकिएन।"
+      );
       return;
     }
 
@@ -317,8 +344,14 @@
 
     const result = await api.getConversations();
 
-    if (!result?.ok || !Array.isArray(result.data)) {
-      notify(result?.message || "च्याट सूची लोड गर्न सकिएन।");
+    if (
+      !result?.ok ||
+      !Array.isArray(result.data)
+    ) {
+      notify(
+        result?.message ||
+        "च्याट सूची लोड गर्न सकिएन।"
+      );
       return;
     }
 
@@ -327,18 +360,20 @@
     );
 
     if (!conversations.length) {
-      notify("Forward गर्न अर्को च्याट छैन।");
+      notify("Forward गर्न अर्को च्याट उपलब्ध छैन।");
       return;
     }
 
-    const choices = conversations.map((item, index) => {
-      const name =
-        item.title ||
-        item.name ||
-        (item.type === "group" ? "Group chat" : "Direct chat");
+    const choices = conversations.map(
+      (item, index) => {
+        const name =
+          item.name ||
+          item.title ||
+          "च्याट";
 
-      return `${index + 1}. ${name}`;
-    }).join("\n");
+        return `${index + 1}. ${name}`;
+      }
+    ).join("\n");
 
     const answer = global.prompt(
       "कुन च्याटमा Forward गर्ने?\n\n" +
@@ -348,18 +383,18 @@
 
     if (answer === null) return;
 
-    const selectedIndex = Number(answer) - 1;
+    const index = Number(answer) - 1;
 
     if (
-      !Number.isInteger(selectedIndex) ||
-      selectedIndex < 0 ||
-      selectedIndex >= conversations.length
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= conversations.length
     ) {
       notify("मान्य च्याट नम्बर छान्नुहोस्।");
       return;
     }
 
-    const target = conversations[selectedIndex];
+    const target = conversations[index];
 
     const forwarded = await api.forwardMessage(
       messageId,
@@ -367,7 +402,10 @@
     );
 
     if (!forwarded?.ok) {
-      notify(forwarded?.message || "Forward गर्न सकिएन।");
+      notify(
+        forwarded?.message ||
+        "Forward गर्न सकिएन।"
+      );
       return;
     }
 
@@ -398,7 +436,10 @@
       });
 
     if (error) {
-      notify(error.message || "सन्देश हटाउन सकिएन।");
+      notify(
+        error.message ||
+        "सन्देश हटाउन सकिएन।"
+      );
       return;
     }
 
@@ -418,7 +459,10 @@
     );
 
     if (!result?.ok) {
-      notify(result?.message || "सन्देश हटाउन सकिएन।");
+      notify(
+        result?.message ||
+        "सन्देश हटाउन सकिएन।"
+      );
       return;
     }
 
@@ -434,7 +478,7 @@
       event.preventDefault();
       event.stopPropagation();
 
-      const menu = trigger.parentElement.querySelector(
+      const menu = trigger.parentElement?.querySelector(
         ".saino-message-actions-menu"
       );
 
@@ -454,29 +498,35 @@
       return;
     }
 
-    const actionButton = event.target.closest(
+    const button = event.target.closest(
       "[data-message-action]"
     );
 
-    if (!actionButton) {
-      if (!event.target.closest(".saino-message-actions")) {
+    if (!button) {
+      if (!event.target.closest(
+        ".saino-message-actions"
+      )) {
         closeMenus();
       }
+
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
 
-    const row = actionButton.closest(".saino-message-row");
+    const row = button.closest(
+      ".saino-message-row"
+    );
+
     const messageId = row?.dataset.messageId;
-    const action = actionButton.dataset.messageAction;
+    const action = button.dataset.messageAction;
 
     closeMenus();
 
     if (!messageId || !row) return;
 
-    actionButton.disabled = true;
+    button.disabled = true;
 
     try {
       if (action === "copy") {
@@ -491,18 +541,20 @@
         await deleteForEveryone(messageId);
       }
     } catch (error) {
-      notify(error?.message || "कार्य पूरा गर्न सकिएन।");
+      notify(
+        error?.message ||
+        "कार्य पूरा गर्न सकिएन।"
+      );
     } finally {
-      if (actionButton.isConnected) {
-        actionButton.disabled = false;
+      if (button.isConnected) {
+        button.disabled = false;
       }
     }
   }
 
   function setActiveConversation(detail = {}) {
-    const conversation = detail.conversation || {};
-
-    activeConversationId = conversation.id || "";
+    activeConversationId =
+      detail.conversation?.id || "";
 
     activeUserId =
       detail.user?.id ||
@@ -512,76 +564,91 @@
     scheduleRefresh();
   }
 
-  global.addEventListener("saino:app-ready", event => {
-    setActiveConversation(event.detail || {});
-  });
+  global.addEventListener(
+    "saino:app-ready",
+    event => {
+      setActiveConversation(event.detail || {});
+    }
+  );
 
-  global.addEventListener("ksk:messages-cloud-change", event => {
-    const action = event.detail?.action;
+  global.addEventListener(
+    "saino:conversation-select",
+    event => {
+      const conversation =
+        event.detail?.conversation;
 
-    if ([
-      "message-sent",
-      "message-edited",
-      "message-deleted",
-      "realtime-message"
-    ].includes(action)) {
+      if (!conversation) return;
+
+      activeConversationId = conversation.id || "";
+
+      activeUserId =
+        authApi()?.getUser?.()?.id || "";
+
       scheduleRefresh();
     }
-  });
+  );
 
-  global.addEventListener("saino:conversation-select", event => {
-    const conversation = event.detail?.conversation;
+  global.addEventListener(
+    "ksk:messages-cloud-change",
+    event => {
+      const action = event.detail?.action;
 
-    if (!conversation) return;
+      if ([
+        "message-sent",
+        "message-edited",
+        "message-deleted",
+        "realtime-message"
+      ].includes(action)) {
+        scheduleRefresh();
+      }
+    }
+  );
 
-    activeConversationId = conversation.id || "";
-    activeUserId = authApi()?.getUser?.()?.id || "";
+  document.addEventListener(
+    "click",
+    handleClick
+  );
 
-    scheduleRefresh();
-  });
-
-  document.addEventListener("click", handleClick);
-
-  /*
-   * Observer ले आफ्नै menu थपिएको mutation मा refresh गर्दैन।
-   * नयाँ message row थपिएको अवस्थामा मात्र refresh गर्छ।
-   */
-  const observer = new MutationObserver(records => {
-    const hasNewMessageRow = records.some(record =>
-      [...record.addedNodes].some(node => {
-        if (node.nodeType !== 1) return false;
-
-        return (
-          node.matches?.(".saino-message-row") ||
-          Boolean(node.querySelector?.(".saino-message-row"))
-        );
-      })
+  function observeApp() {
+    const root = document.getElementById(
+      "saino-app"
     );
 
-    if (hasNewMessageRow) {
-      scheduleRefresh();
-    }
-  });
+    if (!root || observer) return;
 
-  function startObserver() {
-    const root = document.querySelector("#saino-app");
+    observer = new MutationObserver(records => {
+      const rowAdded = records.some(record =>
+        [...record.addedNodes].some(node => {
+          if (node.nodeType !== 1) return false;
 
-    if (root) {
-      observer.observe(root, {
-        childList: true,
-        subtree: true
-      });
-    }
+          return (
+            node.matches?.(".saino-message-row") ||
+            Boolean(
+              node.querySelector?.(".saino-message-row")
+            )
+          );
+        })
+      );
+
+      if (rowAdded) {
+        scheduleRefresh();
+      }
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true
+    });
   }
 
   if (document.readyState === "loading") {
     document.addEventListener(
       "DOMContentLoaded",
-      startObserver,
+      observeApp,
       { once: true }
     );
   } else {
-    startObserver();
+    observeApp();
   }
 
   global.SainoMessengerActions = Object.freeze({
