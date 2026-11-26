@@ -11,6 +11,7 @@
   let activeConversationId = "";
   let activeUserId = "";
   let refreshQueued = false;
+  let refreshRunning = false;
 
   const escapeHTML = value =>
     String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -35,14 +36,24 @@
 
   function closeMenus(except) {
     document.querySelectorAll(".saino-message-actions-menu").forEach(menu => {
-      if (menu !== except) menu.hidden = true;
+      if (menu !== except) {
+        menu.hidden = true;
+
+        const trigger = menu.parentElement?.querySelector(
+          ".saino-message-actions-trigger"
+        );
+
+        trigger?.setAttribute("aria-expanded", "false");
+      }
     });
   }
 
   function menuMarkup(message) {
     const own = message.fromMe === true;
     const textOnly = (message.type || "text") === "text";
-    const deleted = Boolean(message.deletedAt || message.deletedForEveryone);
+    const deleted = Boolean(
+      message.deletedAt || message.deletedForEveryone
+    );
 
     if (deleted) return "";
 
@@ -58,15 +69,21 @@
 
         <div class="saino-message-actions-menu" hidden>
           ${textOnly ? `
-            <button type="button" data-message-action="copy">Copy</button>
+            <button type="button" data-message-action="copy">
+              Copy
+            </button>
           ` : ""}
 
           ${own && textOnly ? `
-            <button type="button" data-message-action="edit">Edit</button>
+            <button type="button" data-message-action="edit">
+              Edit
+            </button>
           ` : ""}
 
           ${textOnly ? `
-            <button type="button" data-message-action="forward">Forward</button>
+            <button type="button" data-message-action="forward">
+              Forward
+            </button>
           ` : ""}
 
           <button type="button" data-message-action="delete-me">
@@ -85,64 +102,8 @@
     `;
   }
 
-  
-  async function decorateMessages() {
-    const host = getHost();
-    const api = messagesApi();
-
-    if (!host || !api?.getMessages || !activeUserId) return;
-
-    const rows = [...host.querySelectorAll(".saino-message-row")];
-
-    if (!rows.length) return;
-
-    const result = await api.getMessages(activeConversationId, {
-      limit: 50
-    });
-
-    if (!result?.ok || !Array.isArray(result.data)) return;
-
-    const messages = result.data;
-
-    rows.forEach((row, index) => {
-      const message = messages[index];
-      if (!message) return;
-
-      row.dataset.messageId = message.id;
-
-      const article = row.querySelector(".saino-message");
-      if (!article) return;
-
-      const existingMenu = article.querySelector(
-        ".saino-message-actions"
-      );
-
-      const deleted = Boolean(
-        message.deletedAt || message.deletedForEveryone
-      );
-
-      if (deleted) {
-        existingMenu?.remove();
-        return;
-      }
-
-      // पहिले नै मेनु छ भने फेरि नबनाउने।
-      // यसले MutationObserver को अनावश्यक refresh loop रोक्छ।
-      if (!existingMenu) {
-        article.insertAdjacentHTML(
-          "beforeend",
-          menuMarkup(message)
-        );
-      }
-    });
-
-    await applyDeletedForMe(rows);
-  }
-
-
   async function applyDeletedForMe(rows) {
-    const auth = authApi();
-    const client = auth?.getClient?.();
+    const client = authApi()?.getClient?.();
 
     if (!client || !activeUserId) return;
 
@@ -159,17 +120,140 @@
       .in("message_id", ids);
 
     if (error) {
-      console.warn("Saino message deletion lookup failed:", error);
+      console.warn("Saino deletion lookup failed:", error);
       return;
     }
 
-    const hiddenIds = new Set((data || []).map(item => item.message_id));
+    const hiddenIds = new Set(
+      (data || []).map(item => item.message_id)
+    );
 
     rows.forEach(row => {
       if (hiddenIds.has(row.dataset.messageId)) {
         row.hidden = true;
       }
     });
+  }
+
+  async function decorateMessages() {
+    if (refreshRunning) return;
+
+    const host = getHost();
+    const api = messagesApi();
+
+    if (!host || !api?.getMessages || !activeUserId) return;
+
+    const allRows = [
+      ...host.querySelectorAll(".saino-message-row")
+    ];
+
+    if (!allRows.length) return;
+
+    refreshRunning = true;
+
+    try {
+      /*
+       * Pagination बाट आएका पुराना rows मा ID पहिल्यै हुन्छ।
+       * ID नभएका प्रारम्भिक rows मात्र पछिल्ला ५० messages सँग
+       * जोडिन्छन्।
+       */
+      const unassignedRows = allRows.filter(
+        row => !row.dataset.messageId
+      );
+
+      if (unassignedRows.length) {
+        const result = await api.getMessages(
+          activeConversationId,
+          { limit: 50 }
+        );
+
+        if (
+          !result?.ok ||
+          !Array.isArray(result.data) ||
+          getHost() !== host
+        ) {
+          return;
+        }
+
+        const messages = result.data;
+
+        unassignedRows.forEach((row, index) => {
+          const message = messages[index];
+
+          if (!message) return;
+
+          row.dataset.messageId = message.id;
+
+          row.dataset.messageFromMe = String(
+            Boolean(message.fromMe)
+          );
+
+          row.dataset.messageType = message.type || "text";
+          row.dataset.messageDeleted = String(
+            Boolean(
+              message.deletedAt ||
+              message.deletedForEveryone
+            )
+          );
+
+          const article = row.querySelector(".saino-message");
+
+          if (!article) return;
+
+          if (message.deletedAt || message.deletedForEveryone) {
+            return;
+          }
+
+          if (
+            !article.querySelector(".saino-message-actions")
+          ) {
+            article.insertAdjacentHTML(
+              "beforeend",
+              menuMarkup(message)
+            );
+          }
+        });
+      }
+
+      /*
+       * History pagination बाट आएका rows को ID हुन्छ।
+       * ती rows मा आवश्यक metadata data attributes बाट लिइन्छ।
+       */
+      allRows.forEach(row => {
+        if (!row.dataset.messageId) return;
+
+        const article = row.querySelector(".saino-message");
+
+        if (!article) return;
+
+        if (row.dataset.messageDeleted === "true") return;
+
+        if (
+          article.querySelector(".saino-message-actions")
+        ) {
+          return;
+        }
+
+        if (!row.dataset.messageType) return;
+
+        const message = {
+          fromMe: row.dataset.messageFromMe === "true",
+          type: row.dataset.messageType
+        };
+
+        article.insertAdjacentHTML(
+          "beforeend",
+          menuMarkup(message)
+        );
+      });
+
+      await applyDeletedForMe(allRows);
+
+    } catch (error) {
+      console.error("Saino message actions:", error);
+    } finally {
+      refreshRunning = false;
+    }
   }
 
   function scheduleRefresh() {
@@ -179,10 +263,9 @@
 
     global.setTimeout(() => {
       refreshQueued = false;
-      decorateMessages().catch(error => {
-        console.error("Saino message actions:", error);
-      });
-    }, 150);
+
+      decorateMessages();
+    }, 180);
   }
 
   async function copyMessage(messageId) {
@@ -216,10 +299,13 @@
 
     if (value === oldText.trim()) return;
 
-    const result = await messagesApi().editMessage(messageId, value);
+    const result = await messagesApi().editMessage(
+      messageId,
+      value
+    );
 
     if (!result?.ok) {
-      notify(result?.message || "सन्देश सम्पादन गर्न सकिएन।");
+      notify(result?.message || "सम्पादन गर्न सकिएन।");
       return;
     }
 
@@ -241,12 +327,13 @@
     );
 
     if (!conversations.length) {
-      notify("Forward गर्न अर्को च्याट उपलब्ध छैन।");
+      notify("Forward गर्न अर्को च्याट छैन।");
       return;
     }
 
     const choices = conversations.map((item, index) => {
-      const name = item.title ||
+      const name =
+        item.title ||
         item.name ||
         (item.type === "group" ? "Group chat" : "Direct chat");
 
@@ -288,12 +375,13 @@
   }
 
   async function deleteForMe(messageId, row) {
-    if (!global.confirm("यो सन्देश तपाईंको च्याटबाट हटाउने?")) {
+    if (!global.confirm(
+      "यो सन्देश तपाईंको च्याटबाट हटाउने?"
+    )) {
       return;
     }
 
-    const auth = authApi();
-    const client = auth?.getClient?.();
+    const client = authApi()?.getClient?.();
 
     if (!client || !activeUserId) {
       notify("लगइन जानकारी प्राप्त भएन।");
@@ -350,11 +438,19 @@
         ".saino-message-actions-menu"
       );
 
+      if (!menu) return;
+
       const willOpen = menu.hidden;
 
       closeMenus(menu);
+
       menu.hidden = !willOpen;
-      trigger.setAttribute("aria-expanded", String(willOpen));
+
+      trigger.setAttribute(
+        "aria-expanded",
+        String(willOpen)
+      );
+
       return;
     }
 
@@ -407,7 +503,9 @@
     const conversation = detail.conversation || {};
 
     activeConversationId = conversation.id || "";
-    activeUserId = detail.user?.id ||
+
+    activeUserId =
+      detail.user?.id ||
       authApi()?.getUser?.()?.id ||
       "";
 
@@ -421,20 +519,19 @@
   global.addEventListener("ksk:messages-cloud-change", event => {
     const action = event.detail?.action;
 
-    if (
-      [
-        "message-sent",
-        "message-edited",
-        "message-deleted",
-        "realtime-message"
-      ].includes(action)
-    ) {
+    if ([
+      "message-sent",
+      "message-edited",
+      "message-deleted",
+      "realtime-message"
+    ].includes(action)) {
       scheduleRefresh();
     }
   });
 
   global.addEventListener("saino:conversation-select", event => {
     const conversation = event.detail?.conversation;
+
     if (!conversation) return;
 
     activeConversationId = conversation.id || "";
@@ -445,8 +542,25 @@
 
   document.addEventListener("click", handleClick);
 
-  const observer = new MutationObserver(() => {
-    if (getHost()) scheduleRefresh();
+  /*
+   * Observer ले आफ्नै menu थपिएको mutation मा refresh गर्दैन।
+   * नयाँ message row थपिएको अवस्थामा मात्र refresh गर्छ।
+   */
+  const observer = new MutationObserver(records => {
+    const hasNewMessageRow = records.some(record =>
+      [...record.addedNodes].some(node => {
+        if (node.nodeType !== 1) return false;
+
+        return (
+          node.matches?.(".saino-message-row") ||
+          Boolean(node.querySelector?.(".saino-message-row"))
+        );
+      })
+    );
+
+    if (hasNewMessageRow) {
+      scheduleRefresh();
+    }
   });
 
   function startObserver() {
@@ -461,7 +575,11 @@
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", startObserver);
+    document.addEventListener(
+      "DOMContentLoaded",
+      startObserver,
+      { once: true }
+    );
   } else {
     startObserver();
   }
