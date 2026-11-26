@@ -1,277 +1,424 @@
 
-/* Saino Messenger Actions UI */
+/* Saino Messenger - WhatsApp-style long-press message actions */
 (function (global) {
   "use strict";
 
   if (global.SainoMessengerActions) return;
 
-  const messagesApi = () => global.KSKSupabaseMessages;
-  const authApi = () => global.KSKSupabaseAuth;
+  const api = () => global.KSKSupabaseMessages;
+  const auth = () => global.KSKSupabaseAuth;
 
-  let activeConversationId = "";
-  let activeUserId = "";
+  const LONG_PRESS_MS = 520;
+  const MOVE_CANCEL_PX = 12;
+
+  let conversationId = "";
+  let userId = "";
+  let selectedIds = new Set();
+  let messageMap = new Map();
+  let host = null;
+  let toolbar = null;
+  let longPressTimer = null;
+  let pointerStart = null;
+  let suppressClick = false;
   let refreshTimer = null;
-  let decorating = false;
-  let observer = null;
+  let loadingMessages = false;
+  let actionBusy = false;
+
+  const isEnglish = () =>
+    global.KSKLanguage?.getLanguage?.() === "en";
+
+  const t = (en, ne) => isEnglish() ? en : ne;
 
   function notify(message) {
     global.alert(message);
   }
 
-  function getHost() {
-    if (!activeConversationId) return null;
+  function currentHost() {
+    if (!conversationId) return null;
 
     return document.querySelector(
-      `.saino-messages[data-saino-messages="${CSS.escape(activeConversationId)}"]`
+      `[data-saino-messages="${CSS.escape(conversationId)}"]`
     );
   }
 
-  function closeMenus(except) {
-    document.querySelectorAll(
-      ".saino-message-actions-menu"
-    ).forEach(menu => {
-      if (menu !== except) {
-        menu.hidden = true;
-
-        menu.parentElement
-          ?.querySelector(".saino-message-actions-trigger")
-          ?.setAttribute("aria-expanded", "false");
-      }
-    });
+  function rows() {
+    return host
+      ? [...host.querySelectorAll(".saino-message-row")]
+      : [];
   }
 
-  function menuMarkup(message) {
-    const own = message.fromMe === true;
-
-    const textOnly =
-      (message.type || "text") === "text";
-
-    const deleted = Boolean(
-      message.deletedAt ||
-      message.deletedForEveryone
-    );
-
-    if (deleted) return "";
-
-    return `
-      <div class="saino-message-actions">
-
-        <button
-          type="button"
-          class="saino-message-actions-trigger"
-          aria-label="Message actions"
-          title="Message actions"
-          aria-expanded="false"
-        >⋮</button>
-
-        <div class="saino-message-actions-menu" hidden>
-
-          ${textOnly ? `
-            <button
-              type="button"
-              data-message-action="copy"
-            >Copy</button>
-          ` : ""}
-
-          ${own && textOnly ? `
-            <button
-              type="button"
-              data-message-action="edit"
-            >Edit</button>
-          ` : ""}
-
-          ${textOnly ? `
-            <button
-              type="button"
-              data-message-action="forward"
-            >Forward</button>
-          ` : ""}
-
-          <button
-            type="button"
-            data-message-action="delete-me"
-          >Delete for me</button>
-
-          ${own && textOnly ? `
-            <button
-              type="button"
-              class="is-danger"
-              data-message-action="delete-everyone"
-            >Delete for everyone</button>
-          ` : ""}
-
-        </div>
-      </div>
-    `;
+  function rowId(row) {
+    return row?.dataset.messageId ||
+      row?.dataset.sainoMessageId ||
+      "";
   }
 
-  function applyMessageMetadata(row, message) {
-    row.dataset.messageId = message.id;
-    row.dataset.sainoMessageId = message.id;
+  function getMessage(id) {
+    return messageMap.get(id) || null;
+  }
 
-    row.dataset.messageFromMe = String(
-      Boolean(message.fromMe)
-    );
-
-    row.dataset.messageType =
-      message.type || "text";
-
-    row.dataset.messageDeleted = String(
-      Boolean(
-        message.deletedAt ||
-        message.deletedForEveryone
-      )
+  function selectedRows() {
+    return rows().filter(row =>
+      selectedIds.has(rowId(row))
     );
   }
 
-  async function applyDeletedForMe(rows) {
-    const client = authApi()?.getClient?.();
+  function ensureToolbar() {
+    const panel = host?.closest(".saino-conversation");
 
-    if (!client || !activeUserId) return;
-
-    const ids = rows
-      .map(row => row.dataset.messageId)
-      .filter(Boolean);
-
-    if (!ids.length) return;
-
-    const { data, error } = await client
-      .from("message_user_deletions")
-      .select("message_id")
-      .eq("user_id", activeUserId)
-      .in("message_id", ids);
-
-    if (error) {
-      console.warn(
-        "Saino message deletion lookup failed:",
-        error
-      );
-      return;
-    }
-
-    const hiddenIds = new Set(
-      (data || []).map(item => item.message_id)
-    );
-
-    rows.forEach(row => {
-      if (hiddenIds.has(row.dataset.messageId)) {
-        row.hidden = true;
-      }
-    });
-  }
-
-  async function decorateMessages() {
-    if (decorating) return;
-
-    const host = getHost();
-    const api = messagesApi();
+    if (!panel) return null;
 
     if (
-      !host ||
-      !api?.getMessages ||
-      !activeUserId
+      toolbar?.isConnected &&
+      toolbar.parentElement === panel
+    ) {
+      return toolbar;
+    }
+
+    toolbar?.remove();
+
+    toolbar = document.createElement("div");
+    toolbar.className = "saino-selection-toolbar";
+    toolbar.hidden = true;
+    toolbar.setAttribute("role", "toolbar");
+
+    toolbar.setAttribute(
+      "aria-label",
+      t("Selected message actions", "छानिएका सन्देशका कार्यहरू")
+    );
+
+    toolbar.innerHTML = `
+      <button
+        type="button"
+        data-saino-select-action="cancel"
+        class="saino-selection-close"
+        aria-label="${t("Cancel selection", "छनोट हटाउनुहोस्")}"
+      >×</button>
+
+      <span class="saino-selection-count" aria-live="polite">1</span>
+
+      <span class="saino-selection-spacer"></span>
+
+      <button
+        type="button"
+        data-saino-select-action="reply"
+        aria-label="${t("Reply", "जवाफ")}"
+        title="${t("Reply", "जवाफ")}"
+      >↩</button>
+
+      <button
+        type="button"
+        data-saino-select-action="copy"
+        aria-label="${t("Copy", "कपी")}"
+        title="${t("Copy", "कपी")}"
+      >▢</button>
+
+      <button
+        type="button"
+        data-saino-select-action="forward"
+        aria-label="${t("Forward", "फर्वार्ड")}"
+        title="${t("Forward", "फर्वार्ड")}"
+      >➦</button>
+
+      <button
+        type="button"
+        data-saino-select-action="edit"
+        aria-label="${t("Edit", "सम्पादन")}"
+        title="${t("Edit", "सम्पादन")}"
+      >✎</button>
+
+      <button
+        type="button"
+        data-saino-select-action="delete"
+        aria-label="${t("Delete", "हटाउनुहोस्")}"
+        title="${t("Delete", "हटाउनुहोस्")}"
+      >⌫</button>
+    `;
+
+    const messages = panel.querySelector(".saino-messages");
+
+    if (messages) {
+      panel.insertBefore(toolbar, messages);
+    } else {
+      panel.insertBefore(toolbar, panel.firstChild);
+    }
+
+    return toolbar;
+  }
+
+  function updateToolbar() {
+    const bar = ensureToolbar();
+
+    if (!bar) return;
+
+    const count = selectedIds.size;
+
+    bar.hidden = count === 0;
+
+    bar.querySelector(
+      ".saino-selection-count"
+    ).textContent = String(count);
+
+    const selected = selectedRows();
+
+    const first = selected.length === 1
+      ? getMessage(rowId(selected[0]))
+      : null;
+
+    const enabled = {
+      reply: selected.length === 1,
+
+      copy:
+        selected.length === 1 &&
+        first &&
+        (first.type || "text") === "text",
+
+      edit:
+        selected.length === 1 &&
+        first?.fromMe &&
+        (first.type || "text") === "text" &&
+        !first.deletedForEveryone,
+
+      forward:
+        selected.length === 1 &&
+        first &&
+        !first.deletedForEveryone,
+
+      delete: selected.length > 0
+    };
+
+    bar.querySelectorAll(
+      "[data-saino-select-action]"
+    ).forEach(button => {
+      const action = button.dataset.sainoSelectAction;
+
+      if (action in enabled) {
+        button.disabled = !enabled[action] || actionBusy;
+      } else {
+        button.disabled = actionBusy;
+      }
+    });
+
+    selected.forEach(row => {
+      row.classList.add("saino-message-selected");
+    });
+
+    rows()
+      .filter(row => !selectedIds.has(rowId(row)))
+      .forEach(row => {
+        row.classList.remove("saino-message-selected");
+      });
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+
+    rows().forEach(row => {
+      row.classList.remove("saino-message-selected");
+    });
+
+    if (toolbar) toolbar.hidden = true;
+
+    updateToolbar();
+  }
+
+  function toggleSelection(id) {
+    if (!id) return;
+
+    if (selectedIds.has(id)) {
+      selectedIds.delete(id);
+    } else {
+      selectedIds.add(id);
+    }
+
+    const row = rows().find(item => rowId(item) === id);
+
+    row?.classList.toggle(
+      "saino-message-selected",
+      selectedIds.has(id)
+    );
+
+    if (!selectedIds.size) {
+      if (toolbar) toolbar.hidden = true;
+    } else {
+      updateToolbar();
+    }
+  }
+
+  function cancelLongPress() {
+    if (longPressTimer !== null) {
+      global.clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    pointerStart = null;
+  }
+
+  function startLongPress(event) {
+    const row = event.target.closest(".saino-message-row");
+
+    if (!row || !host?.contains(row)) return;
+
+    if (
+      event.target.closest(
+        "button,a,input,textarea,video"
+      )
     ) {
       return;
     }
 
-    const rows = [
-      ...host.querySelectorAll(":scope > .saino-message-row")
-    ];
+    if (
+      event.pointerType === "mouse" &&
+      event.button !== 0
+    ) {
+      return;
+    }
 
-    if (!rows.length) return;
+    cancelLongPress();
 
-    decorating = true;
+    pointerStart = {
+      x: event.clientX,
+      y: event.clientY,
+      id: rowId(row)
+    };
+
+    longPressTimer = global.setTimeout(() => {
+      longPressTimer = null;
+
+      if (!pointerStart?.id) return;
+
+      suppressClick = true;
+
+      toggleSelection(pointerStart.id);
+
+      pointerStart = null;
+    }, LONG_PRESS_MS);
+  }
+
+  function moveLongPress(event) {
+    if (!pointerStart) return;
+
+    const dx = event.clientX - pointerStart.x;
+    const dy = event.clientY - pointerStart.y;
+
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) {
+      cancelLongPress();
+    }
+  }
+
+  function handleContextMenu(event) {
+    const row = event.target.closest(".saino-message-row");
+
+    if (!row || !host?.contains(row)) return;
+
+    event.preventDefault();
+
+    cancelLongPress();
+
+    toggleSelection(rowId(row));
+  }
+
+  function handleRowClick(event) {
+    const row = event.target.closest(".saino-message-row");
+
+    if (!row || !host?.contains(row)) return;
+
+    if (suppressClick) {
+      suppressClick = false;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      return;
+    }
+
+    if (
+      selectedIds.size &&
+      !event.target.closest("button,a,video")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      toggleSelection(rowId(row));
+    }
+  }
+
+  async function refreshMessageMap() {
+    const current = currentHost();
+
+    if (
+      !current ||
+      loadingMessages ||
+      !api()?.getMessages
+    ) {
+      return;
+    }
+
+    host = current;
+    loadingMessages = true;
+
+    const requestedConversation = conversationId;
 
     try {
-      const unassigned = rows.filter(
-        row => !row.dataset.messageId
+      const result = await api().getMessages(
+        requestedConversation,
+        { limit: 50 }
       );
 
+      if (
+        !result?.ok ||
+        !Array.isArray(result.data) ||
+        requestedConversation !== conversationId ||
+        host !== currentHost()
+      ) {
+        return;
+      }
+
+      messageMap = new Map(
+        result.data.map(message => [
+          message.id,
+          message
+        ])
+      );
+
+      const currentRows = rows();
+
       /*
-       * Positional mapping only when every row is unmapped.
-       * This prevents old paginated messages being attached
-       * to the wrong latest message.
+       * App.js र Messenger API दुवैले सन्देश
+       * पुरानोबाट नयाँ क्रममा राख्छन्।
        */
-      if (unassigned.length === rows.length) {
-        const result = await api.getMessages(
-          activeConversationId,
-          { limit: 50 }
-        );
+      if (currentRows.length === result.data.length) {
+        currentRows.forEach((row, index) => {
+          const message = result.data[index];
 
-        if (
-          !result?.ok ||
-          !Array.isArray(result.data) ||
-          result.data.length !== rows.length ||
-          host !== getHost()
-        ) {
-          return;
-        }
+          row.dataset.messageId = message.id;
+          row.dataset.sainoMessageId = message.id;
 
-        rows.forEach((row, index) => {
-          applyMessageMetadata(
-            row,
-            result.data[index]
+          row.dataset.messageFromMe = String(
+            Boolean(message.fromMe)
           );
+
+          row.dataset.messageType =
+            message.type || "text";
         });
       }
 
-      rows.forEach(row => {
-        const article = row.querySelector(
-          ".saino-message"
-        );
+      selectedIds = new Set(
+        [...selectedIds].filter(id =>
+          messageMap.has(id) ||
+          currentRows.some(row => rowId(row) === id)
+        )
+      );
 
-        if (!article) return;
-
-        const deleted =
-          row.dataset.messageDeleted === "true";
-
-        if (deleted) {
-          article.querySelector(
-            ".saino-message-actions"
-          )?.remove();
-
-          return;
-        }
-
-        if (
-          article.querySelector(
-            ".saino-message-actions"
-          )
-        ) {
-          return;
-        }
-
-        /*
-         * History Pagination module ले पुराना messages का
-         * metadata पहिल्यै राखेको हुन्छ।
-         */
-        if (
-          !row.dataset.messageId ||
-          !row.dataset.messageType
-        ) {
-          return;
-        }
-
-        article.insertAdjacentHTML(
-          "beforeend",
-          menuMarkup({
-            fromMe:
-              row.dataset.messageFromMe === "true",
-
-            type: row.dataset.messageType
-          })
-        );
-      });
-
-      await applyDeletedForMe(rows);
+      updateToolbar();
 
     } catch (error) {
-      console.error(
-        "Saino message actions:",
+      console.warn(
+        "Saino message actions refresh:",
         error
       );
     } finally {
-      decorating = false;
+      loadingMessages = false;
     }
   }
 
@@ -282,103 +429,143 @@
 
     refreshTimer = global.setTimeout(() => {
       refreshTimer = null;
-      decorateMessages();
+      refreshMessageMap();
     }, 180);
   }
 
-  async function copyMessage(messageId) {
-    const result = await messagesApi().copyMessage(
-      messageId
-    );
+  async function copySelected() {
+    const selected = selectedRows();
+
+    if (selected.length !== 1) return;
+
+    const id = rowId(selected[0]);
+    const message = getMessage(id);
+
+    if (
+      !message ||
+      (message.type || "text") !== "text"
+    ) {
+      return;
+    }
+
+    const result = await api().copyMessage(id);
 
     if (!result?.ok) {
-      notify(
+      throw new Error(
         result?.message ||
-        "सन्देश Copy गर्न सकिएन।"
+        t("Could not copy message.", "सन्देश कपी गर्न सकिएन।")
+      );
+    }
+
+    notify(t("Copied", "कपी भयो"));
+
+    clearSelection();
+  }
+
+  async function editSelected() {
+    const selected = selectedRows();
+
+    if (selected.length !== 1) return;
+
+    const row = selected[0];
+    const id = rowId(row);
+    const message = getMessage(id);
+
+    if (
+      !message?.fromMe ||
+      (message.type || "text") !== "text"
+    ) {
+      return;
+    }
+
+    const input = global.prompt(
+      t("Edit message", "सन्देश सम्पादन गर्नुहोस्"),
+      message.text || ""
+    );
+
+    if (input === null) return;
+
+    const content = input.trim();
+
+    if (!content) {
+      notify(
+        t(
+          "Message cannot be empty.",
+          "खाली सन्देश राख्न मिल्दैन।"
+        )
       );
       return;
     }
 
-    notify("सन्देश Copy भयो।");
-  }
-
-  async function editMessage(messageId, row) {
-    const oldText =
-      row.querySelector(".saino-message-text")
-        ?.textContent || "";
-
-    const updated = global.prompt(
-      "सन्देश सम्पादन गर्नुहोस्:",
-      oldText
-    );
-
-    if (updated === null) return;
-
-    const value = updated.trim();
-
-    if (!value) {
-      notify("खाली सन्देश राख्न मिल्दैन।");
-      return;
+    if (content === String(message.text || "").trim()) {
+      return clearSelection();
     }
 
-    if (value === oldText.trim()) return;
-
-    const result = await messagesApi().editMessage(
-      messageId,
-      value
-    );
+    const result = await api().editMessage(id, content);
 
     if (!result?.ok) {
-      notify(
+      throw new Error(
         result?.message ||
-        "सन्देश सम्पादन गर्न सकिएन।"
+        t("Could not edit message.", "सम्पादन गर्न सकिएन।")
       );
-      return;
     }
 
-    global.SainoApp?.refreshMessages?.();
+    clearSelection();
+
+    await global.SainoApp?.refreshMessages?.();
   }
 
-  async function forwardMessage(messageId) {
-    const api = messagesApi();
+  async function forwardSelected() {
+    const selected = selectedRows();
 
-    const result = await api.getConversations();
+    if (selected.length !== 1) return;
+
+    const id = rowId(selected[0]);
+    const apiRef = api();
+
+    const result = await apiRef.getConversations();
 
     if (
       !result?.ok ||
       !Array.isArray(result.data)
     ) {
-      notify(
+      throw new Error(
         result?.message ||
-        "च्याट सूची लोड गर्न सकिएन।"
+        t("Could not load chats.", "च्याट सूची लोड गर्न सकिएन।")
       );
-      return;
     }
 
-    const conversations = result.data.filter(
-      item => item.id !== activeConversationId
+    const targets = result.data.filter(
+      item => item.id !== conversationId
     );
 
-    if (!conversations.length) {
-      notify("Forward गर्न अर्को च्याट उपलब्ध छैन।");
-      return;
+    if (!targets.length) {
+      return notify(
+        t(
+          "No other chat is available.",
+          "अर्को च्याट उपलब्ध छैन।"
+        )
+      );
     }
 
-    const choices = conversations.map(
-      (item, index) => {
-        const name =
-          item.name ||
-          item.title ||
-          "च्याट";
-
-        return `${index + 1}. ${name}`;
-      }
+    const labels = targets.map((item, index) =>
+      `${index + 1}. ${
+        item.title ||
+        item.name ||
+        (item.type === "group" ? "Group" : "Chat")
+      }`
     ).join("\n");
 
     const answer = global.prompt(
-      "कुन च्याटमा Forward गर्ने?\n\n" +
-      choices +
-      "\n\nनम्बर लेख्नुहोस्:"
+      t(
+        "Forward to which chat?\n\n",
+        "कुन च्याटमा फर्वार्ड गर्ने?\n\n"
+      ) +
+      labels +
+      t(
+        "\n\nEnter number:",
+        "\n\nनम्बर लेख्नुहोस्:"
+      )
     );
 
     if (answer === null) return;
@@ -388,204 +575,369 @@
     if (
       !Number.isInteger(index) ||
       index < 0 ||
-      index >= conversations.length
+      index >= targets.length
     ) {
-      notify("मान्य च्याट नम्बर छान्नुहोस्।");
-      return;
+      return notify(
+        t("Invalid chat number.", "च्याट नम्बर मिलेन।")
+      );
     }
 
-    const target = conversations[index];
-
-    const forwarded = await api.forwardMessage(
-      messageId,
-      target.id
+    const forwarded = await apiRef.forwardMessage(
+      id,
+      targets[index].id
     );
 
     if (!forwarded?.ok) {
-      notify(
+      throw new Error(
         forwarded?.message ||
-        "Forward गर्न सकिएन।"
+        t("Could not forward message.", "फर्वार्ड गर्न सकिएन।")
       );
-      return;
     }
 
-    notify("सन्देश Forward भयो।");
+    clearSelection();
+
+    notify(t("Message forwarded.", "सन्देश फर्वार्ड भयो।"));
   }
 
-  async function deleteForMe(messageId, row) {
-    if (!global.confirm(
-      "यो सन्देश तपाईंको च्याटबाट हटाउने?"
-    )) {
-      return;
-    }
+  function replySelected() {
+    const selected = selectedRows();
 
-    const client = authApi()?.getClient?.();
+    if (selected.length !== 1) return;
 
-    if (!client || !activeUserId) {
-      notify("लगइन जानकारी प्राप्त भएन।");
-      return;
-    }
+    const row = selected[0];
 
-    const { error } = await client
-      .from("message_user_deletions")
-      .upsert({
-        message_id: messageId,
-        user_id: activeUserId
-      }, {
-        onConflict: "user_id,message_id"
-      });
+    const replyButton = row.querySelector(
+      ".saino-message-reply-button"
+    );
 
-    if (error) {
+    if (!replyButton) {
       notify(
-        error.message ||
-        "सन्देश हटाउन सकिएन।"
+        t(
+          "Reply is still loading. Try again in a moment.",
+          "Reply सुविधा लोड हुँदैछ, केहीबेरपछि फेरि प्रयास गर्नुहोस्।"
+        )
       );
       return;
     }
 
-    row.hidden = true;
+    clearSelection();
+
+    replyButton.click();
   }
 
-  async function deleteForEveryone(messageId) {
-    if (!global.confirm(
-      "यो सन्देश सबैका लागि हटाउने? यो कार्य फिर्ता गर्न मिल्दैन।"
-    )) {
-      return;
-    }
+  function showDeleteChoices() {
+    const selected = selectedRows();
 
-    const result = await messagesApi().deleteMessage(
-      messageId,
-      true
-    );
+    if (!selected.length) return;
 
-    if (!result?.ok) {
-      notify(
-        result?.message ||
-        "सन्देश हटाउन सकिएन।"
-      );
-      return;
-    }
+    const firstMessage = selected.length === 1
+      ? getMessage(rowId(selected[0]))
+      : null;
 
-    global.SainoApp?.refreshMessages?.();
-  }
+    const canDeleteEveryone =
+      selected.length === 1 &&
+      firstMessage?.fromMe;
 
-  async function handleClick(event) {
-    const trigger = event.target.closest(
-      ".saino-message-actions-trigger"
-    );
+    const overlay = document.createElement("div");
 
-    if (trigger) {
-      event.preventDefault();
-      event.stopPropagation();
+    overlay.className = "saino-delete-dialog-backdrop";
 
-      const menu = trigger.parentElement?.querySelector(
-        ".saino-message-actions-menu"
-      );
+    overlay.innerHTML = `
+      <div
+        class="saino-delete-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="saino-delete-title"
+      >
+        <strong id="saino-delete-title">
+          ${t("Delete message", "सन्देश हटाउनुहोस्")}
+        </strong>
 
-      if (!menu) return;
+        <p>
+          ${t(
+            "Choose who this message should be deleted for.",
+            "यो सन्देश कसका लागि हटाउने छान्नुहोस्।"
+          )}
+        </p>
 
-      const willOpen = menu.hidden;
+        <button type="button" data-delete-choice="me">
+          ${t("Delete for me", "मेरो लागि हटाउनुहोस्")}
+        </button>
 
-      closeMenus(menu);
+        ${canDeleteEveryone ? `
+          <button
+            type="button"
+            data-delete-choice="everyone"
+            class="is-danger"
+          >
+            ${t("Delete for everyone", "सबैका लागि हटाउनुहोस्")}
+          </button>
+        ` : ""}
 
-      menu.hidden = !willOpen;
+        <button
+          type="button"
+          data-delete-choice="cancel"
+          class="is-cancel"
+        >
+          ${t("Cancel", "रद्द गर्नुहोस्")}
+        </button>
+      </div>
+    `;
 
-      trigger.setAttribute(
-        "aria-expanded",
-        String(willOpen)
-      );
-
-      return;
-    }
-
-    const button = event.target.closest(
-      "[data-message-action]"
-    );
-
-    if (!button) {
-      if (!event.target.closest(
-        ".saino-message-actions"
-      )) {
-        closeMenus();
+    overlay.addEventListener("click", async event => {
+      if (
+        event.target === overlay ||
+        event.target.closest('[data-delete-choice="cancel"]')
+      ) {
+        overlay.remove();
+        return;
       }
 
-      return;
-    }
+      const choice = event.target
+        .closest("[data-delete-choice]")
+        ?.dataset.deleteChoice;
 
-    event.preventDefault();
-    event.stopPropagation();
+      if (!choice || choice === "cancel") return;
 
-    const row = button.closest(
-      ".saino-message-row"
-    );
+      overlay.remove();
 
-    const messageId = row?.dataset.messageId;
-    const action = button.dataset.messageAction;
+      await deleteSelected(choice);
+    });
 
-    closeMenus();
+    document.body.appendChild(overlay);
+  }
 
-    if (!messageId || !row) return;
+  async function deleteSelected(choice) {
+    const selected = selectedRows();
 
-    button.disabled = true;
+    if (!selected.length || actionBusy) return;
+
+    actionBusy = true;
+    updateToolbar();
 
     try {
-      if (action === "copy") {
-        await copyMessage(messageId);
-      } else if (action === "edit") {
-        await editMessage(messageId, row);
-      } else if (action === "forward") {
-        await forwardMessage(messageId);
-      } else if (action === "delete-me") {
-        await deleteForMe(messageId, row);
-      } else if (action === "delete-everyone") {
-        await deleteForEveryone(messageId);
+      if (choice === "everyone") {
+        if (selected.length !== 1) {
+          throw new Error(
+            t(
+              "Delete for everyone is available for one message at a time.",
+              "सबैका लागि एकपटकमा एउटा सन्देश मात्र हटाउन मिल्छ।"
+            )
+          );
+        }
+
+        const id = rowId(selected[0]);
+
+        const result = await api().deleteMessage(id, true);
+
+        if (!result?.ok) {
+          throw new Error(
+            result?.message ||
+            t("Could not delete message.", "सन्देश हटाउन सकिएन।")
+          );
+        }
+
+      } else {
+        const client = auth()?.getClient?.();
+
+        if (!client || !userId) {
+          throw new Error(
+            t(
+              "Login information is unavailable.",
+              "लगइन जानकारी उपलब्ध छैन।"
+            )
+          );
+        }
+
+        const records = selected.map(row => ({
+          message_id: rowId(row),
+          user_id: userId
+        }));
+
+        const { error } = await client
+          .from("message_user_deletions")
+          .upsert(records, {
+            onConflict: "user_id,message_id"
+          });
+
+        if (error) throw error;
       }
+
+      clearSelection();
+
+      await global.SainoApp?.refreshMessages?.();
+
     } catch (error) {
       notify(
         error?.message ||
-        "कार्य पूरा गर्न सकिएन।"
+        t("Could not delete message.", "सन्देश हटाउन सकिएन।")
       );
+
     } finally {
-      if (button.isConnected) {
-        button.disabled = false;
-      }
+      actionBusy = false;
+      updateToolbar();
     }
   }
 
-  function setActiveConversation(detail = {}) {
-    activeConversationId =
-      detail.conversation?.id || "";
+  async function handleToolbarAction(action) {
+    if (action === "cancel") {
+      clearSelection();
+      return;
+    }
 
-    activeUserId =
+    if (actionBusy) return;
+
+    try {
+      if (action === "reply") {
+        replySelected();
+      } else if (action === "copy") {
+        await copySelected();
+      } else if (action === "forward") {
+        await forwardSelected();
+      } else if (action === "edit") {
+        await editSelected();
+      } else if (action === "delete") {
+        showDeleteChoices();
+      }
+
+    } catch (error) {
+      notify(
+        error?.message ||
+        t("Action failed.", "कार्य पूरा हुन सकेन।")
+      );
+    }
+  }
+
+  function handleDocumentClick(event) {
+    const actionButton = event.target.closest(
+      "[data-saino-select-action]"
+    );
+
+    if (actionButton && toolbar?.contains(actionButton)) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      handleToolbarAction(
+        actionButton.dataset.sainoSelectAction
+      );
+
+      return;
+    }
+
+    if (!host || !selectedIds.size) return;
+
+    if (event.target.closest(".saino-message-row")) return;
+
+    if (event.target.closest(".saino-selection-toolbar")) return;
+
+    clearSelection();
+  }
+
+  function setConversation(detail = {}) {
+    conversationId = detail.conversation?.id || "";
+
+    userId =
       detail.user?.id ||
-      authApi()?.getUser?.()?.id ||
+      auth()?.getUser?.()?.id ||
       "";
+
+    selectedIds.clear();
+    messageMap.clear();
+
+    host = currentHost();
+
+    toolbar?.remove();
+    toolbar = null;
 
     scheduleRefresh();
   }
 
+  function bindHost(nextHost) {
+    if (!nextHost || host === nextHost) return;
+
+    if (host) {
+      host.removeEventListener("pointerdown", startLongPress);
+      host.removeEventListener("pointermove", moveLongPress);
+      host.removeEventListener("pointerup", cancelLongPress);
+      host.removeEventListener("pointercancel", cancelLongPress);
+      host.removeEventListener("contextmenu", handleContextMenu);
+      host.removeEventListener("click", handleRowClick, true);
+    }
+
+    host = nextHost;
+
+    host.addEventListener("pointerdown", startLongPress);
+    host.addEventListener("pointermove", moveLongPress, {
+      passive: true
+    });
+    host.addEventListener("pointerup", cancelLongPress);
+    host.addEventListener("pointercancel", cancelLongPress);
+    host.addEventListener("contextmenu", handleContextMenu);
+    host.addEventListener("click", handleRowClick, true);
+
+    ensureToolbar();
+
+    scheduleRefresh();
+  }
+
+  function observeApp() {
+    const root = document.getElementById("saino-app");
+
+    if (!root || typeof MutationObserver === "undefined") {
+      return;
+    }
+
+    const observer = new MutationObserver(records => {
+      const nextHost = currentHost();
+
+      if (nextHost && nextHost !== host) {
+        bindHost(nextHost);
+        return;
+      }
+
+      if (nextHost && !toolbar?.isConnected) {
+        ensureToolbar();
+      }
+
+      const messageRowsChanged = records.some(record => {
+        const target = record.target;
+
+        if (target !== host && !host?.contains(target)) {
+          return false;
+        }
+
+        return [
+          ...record.addedNodes,
+          ...record.removedNodes
+        ].some(node =>
+          node.nodeType === 1 && (
+            node.matches?.(".saino-message-row") ||
+            Boolean(
+              node.querySelector?.(".saino-message-row")
+            )
+          )
+        );
+      });
+
+      if (messageRowsChanged) {
+        scheduleRefresh();
+      }
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true
+    });
+  }
+
   global.addEventListener(
     "saino:app-ready",
-    event => {
-      setActiveConversation(event.detail || {});
-    }
+    event => setConversation(event.detail || {})
   );
 
   global.addEventListener(
     "saino:conversation-select",
-    event => {
-      const conversation =
-        event.detail?.conversation;
-
-      if (!conversation) return;
-
-      activeConversationId = conversation.id || "";
-
-      activeUserId =
-        authApi()?.getUser?.()?.id || "";
-
-      scheduleRefresh();
-    }
+    event => setConversation(event.detail || {})
   );
 
   global.addEventListener(
@@ -604,42 +956,13 @@
     }
   );
 
-  document.addEventListener(
-    "click",
-    handleClick
-  );
+  document.addEventListener("click", handleDocumentClick);
 
-  function observeApp() {
-    const root = document.getElementById(
-      "saino-app"
-    );
-
-    if (!root || observer) return;
-
-    observer = new MutationObserver(records => {
-      const rowAdded = records.some(record =>
-        [...record.addedNodes].some(node => {
-          if (node.nodeType !== 1) return false;
-
-          return (
-            node.matches?.(".saino-message-row") ||
-            Boolean(
-              node.querySelector?.(".saino-message-row")
-            )
-          );
-        })
-      );
-
-      if (rowAdded) {
-        scheduleRefresh();
-      }
-    });
-
-    observer.observe(root, {
-      childList: true,
-      subtree: true
-    });
-  }
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && selectedIds.size) {
+      clearSelection();
+    }
+  });
 
   if (document.readyState === "loading") {
     document.addEventListener(
@@ -652,7 +975,8 @@
   }
 
   global.SainoMessengerActions = Object.freeze({
-    refresh: decorateMessages
+    refresh: scheduleRefresh,
+    clearSelection
   });
 
 })(window);
