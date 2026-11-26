@@ -1,0 +1,291 @@
+/* Saino Settings UI */
+
+.saino-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 25, 21, .56);
+}
+
+.saino-settings-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: min(820px, calc(100dvh - 32px));
+  overflow: hidden;
+  border: 1px solid var(--saino-border);
+  border-radius: 20px;
+  background: var(--saino-surface);
+  color: var(--saino-text);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .24);
+}
+
+.saino-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--saino-border);
+}
+
+.saino-settings-eyebrow {
+  margin: 0 0 3px;
+  color: var(--saino-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.saino-settings-header h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 750;
+}
+
+.saino-settings-close {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--saino-surface-muted);
+  color: var(--saino-text);
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.saino-settings-tabs {
+  display: flex;
+  gap: 7px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--saino-border);
+  scrollbar-width: thin;
+}
+
+.saino-settings-tabs button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--saino-text-muted);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.saino-settings-tabs button.active {
+  border-color: var(--saino-primary);
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-settings-content {
+  min-height: 220px;
+  padding: 20px 22px 26px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.saino-settings-section {
+  margin-bottom: 24px;
+}
+
+.saino-settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.saino-settings-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.saino-settings-description {
+  margin: 0 0 15px;
+  color: var(--saino-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.saino-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px;
+  border: 1px solid var(--saino-border);
+  border-radius: 13px;
+  background: var(--saino-surface-muted);
+}
+
+.saino-settings-row strong {
+  display: block;
+  font-size: 14px;
+}
+
+.saino-settings-row p {
+  margin: 4px 0 0;
+  color: var(--saino-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.saino-settings-readonly {
+  flex: 0 0 auto;
+  color: var(--saino-text-muted);
+  font-size: 11px;
+}
+
+.saino-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.saino-settings-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--saino-border);
+  border-radius: 10px;
+  background: var(--saino-surface);
+  color: var(--saino-text);
+}
+
+.saino-settings-hint {
+  margin: 10px 0 0;
+  color: var(--saino-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.saino-settings-notice {
+  padding: 13px 14px;
+  border: 1px solid var(--saino-border);
+  border-radius: 12px;
+  background: var(--saino-surface-muted);
+  color: var(--saino-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.saino-settings-primary {
+  min-height: 39px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--saino-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.saino-settings-primary:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.saino-settings-switch {
+  position: relative;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 27px;
+  cursor: pointer;
+}
+
+.saino-settings-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.saino-settings-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: #b8c2be;
+  transition: background .18s ease;
+}
+
+.saino-settings-switch span::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+  transition: transform .18s ease;
+}
+
+.saino-settings-switch input:checked + span {
+  background: var(--saino-primary);
+}
+
+.saino-settings-switch input:checked + span::after {
+  transform: translateX(19px);
+}
+
+.saino-settings-switch input:focus-visible + span {
+  outline: 3px solid var(--saino-primary-soft);
+  outline-offset: 2px;
+}
+
+.saino-settings-loading,
+.saino-settings-error {
+  padding: 28px 12px;
+  color: var(--saino-text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.saino-settings-error {
+  color: var(--saino-danger);
+}
+
+body.saino-settings-open {
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .saino-settings-overlay {
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .saino-settings-dialog {
+    width: 100%;
+    max-height: 100dvh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .saino-settings-header {
+    padding: 17px 18px 14px;
+  }
+
+  .saino-settings-content {
+    padding: 18px 16px 28px;
+  }
+
+  .saino-settings-row {
+    gap: 10px;
+    padding: 13px;
+  }
+}
