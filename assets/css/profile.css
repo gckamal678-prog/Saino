@@ -1,0 +1,450 @@
+
+/* Saino Profile UI */
+
+.saino-profile-open {
+  overflow: hidden;
+}
+
+.saino-profile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(10, 25, 21, .56);
+  backdrop-filter: blur(5px);
+}
+
+.saino-profile-dialog {
+  display: flex;
+  width: min(760px, 100%);
+  max-height: min(900px, calc(100dvh - 36px));
+  min-height: 420px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--saino-border);
+  border-radius: 22px;
+  background: var(--saino-surface);
+  box-shadow: 0 24px 80px rgba(0,0,0,.22);
+}
+
+.saino-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--saino-border);
+}
+
+.saino-profile-header h2 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.saino-profile-eyebrow {
+  margin: 0 0 3px;
+  color: var(--saino-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.saino-profile-close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--saino-surface-muted);
+  color: var(--saino-text);
+  font-size: 27px;
+}
+
+.saino-profile-tabs {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--saino-border);
+  scrollbar-width: none;
+}
+
+.saino-profile-tabs button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--saino-surface-muted);
+  color: var(--saino-text-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.saino-profile-tabs button.active {
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-profile-content {
+  overflow-y: auto;
+  padding: 20px 22px 28px;
+}
+
+.saino-profile-loading,
+.saino-profile-empty {
+  padding: 28px 12px;
+  color: var(--saino-text-muted);
+  text-align: center;
+}
+
+.saino-profile-error {
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff0f0;
+  color: #a52d2d;
+}
+
+.saino-profile-hero {
+  position: relative;
+  height: 190px;
+  margin-bottom: 66px;
+  border-radius: 16px;
+  background: linear-gradient(135deg,#dcefe9,#a8d8c8);
+}
+
+.saino-profile-cover {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(135deg,#dcefe9,#a8d8c8);
+}
+
+.saino-profile-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.saino-profile-cover-change {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 8px 12px;
+  border-radius: 18px;
+  background: rgba(20,35,30,.72);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.saino-profile-cover-change input,
+.saino-profile-avatar-change input {
+  display: none;
+}
+
+.saino-profile-avatar-wrap {
+  position: absolute;
+  bottom: -54px;
+  left: 22px;
+  width: 112px;
+  height: 112px;
+}
+
+.saino-profile-avatar {
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  border: 5px solid var(--saino-surface);
+  border-radius: 50%;
+  background: var(--saino-primary-soft);
+}
+
+.saino-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.saino-profile-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--saino-primary-dark);
+  font-size: 34px;
+  font-weight: 750;
+}
+
+.saino-profile-avatar-change {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 3px solid var(--saino-surface);
+  border-radius: 50%;
+  background: var(--saino-primary);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.saino-profile-identity {
+  margin: 0 0 20px 5px;
+}
+
+.saino-profile-identity h3 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.saino-profile-identity p {
+  margin: 2px 0 0;
+  color: var(--saino-text-muted);
+  font-size: 13px;
+}
+
+.saino-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.saino-profile-form label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--saino-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.saino-profile-form input:not([type="checkbox"]),
+.saino-profile-form textarea,
+.saino-profile-form select {
+  width: 100%;
+  min-height: 43px;
+  padding: 10px 12px;
+  border: 1px solid var(--saino-border);
+  border-radius: 10px;
+  background: var(--saino-surface);
+  color: var(--saino-text);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.saino-profile-form textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.saino-profile-form small {
+  color: var(--saino-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.saino-profile-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+}
+
+.saino-profile-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  font-weight: 500 !important;
+}
+
+.saino-profile-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--saino-primary);
+}
+
+.saino-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-top: 3px;
+}
+
+.saino-profile-primary,
+.saino-profile-secondary {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 0;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.saino-profile-primary {
+  background: var(--saino-primary);
+  color: #fff;
+}
+
+.saino-profile-secondary {
+  border: 1px solid var(--saino-border);
+  background: var(--saino-surface);
+  color: var(--saino-text);
+}
+
+.saino-profile-section-intro {
+  margin: 0 0 18px;
+}
+
+.saino-profile-section-intro h3,
+.saino-experience-form h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+}
+
+.saino-profile-section-intro p {
+  margin: 0;
+  color: var(--saino-text-muted);
+  font-size: 13px;
+}
+
+.saino-experience-form {
+  padding: 16px;
+  border: 1px solid var(--saino-border);
+  border-radius: 15px;
+  background: var(--saino-surface-muted);
+}
+
+.saino-experience-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.saino-experience-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--saino-border);
+  border-radius: 14px;
+}
+
+.saino-experience-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-experience-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.saino-experience-copy h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.saino-experience-copy p {
+  margin: 2px 0;
+  color: var(--saino-text-muted);
+  font-size: 13px;
+}
+
+.saino-experience-copy small {
+  color: var(--saino-text-muted);
+  font-size: 11px;
+}
+
+.saino-experience-copy .saino-experience-description {
+  margin-top: 7px;
+  color: var(--saino-text);
+}
+
+.saino-experience-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.saino-experience-actions button {
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--saino-primary);
+  font-size: 12px;
+}
+
+.saino-experience-actions button.danger {
+  color: var(--saino-danger);
+}
+
+@media (max-width:600px) {
+  .saino-profile-overlay {
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .saino-profile-dialog {
+    width: 100%;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .saino-profile-header {
+    padding: 14px 16px 12px;
+  }
+
+  .saino-profile-tabs {
+    padding: 10px 14px;
+  }
+
+  .saino-profile-content {
+    padding: 15px 15px 24px;
+  }
+
+  .saino-profile-hero {
+    height: 155px;
+    margin-bottom: 61px;
+  }
+
+  .saino-profile-avatar-wrap,
+  .saino-profile-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .saino-experience-card {
+    flex-wrap: wrap;
+  }
+
+  .saino-experience-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width:380px) {
+  .saino-profile-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
