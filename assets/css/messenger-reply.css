@@ -1,63 +1,98 @@
 
 /* =========================================================
    SAINO — WHATSAPP STYLE REPLY UI
-   UI ONLY — Existing reply logic preserved
+   Swipe animation, reply tag and quoted message preview
    ========================================================= */
 
-/* Reply button under each message */
+/* -------------------------
+   REPLY BUTTON
+   ------------------------- */
 
 .saino-message-reply-button {
   display: inline-flex;
-  min-height: 27px;
   align-items: center;
   justify-content: center;
-  margin: 5px 0 0;
-  padding: 3px 9px;
+  gap: 5px;
+
+  min-height: 28px;
+  margin-top: 5px;
+  padding: 3px 10px;
+
   border: 0;
-  border-radius: 6px;
+  border-radius: 16px;
+
   background: transparent;
-  color: var(--saino-muted, #667781);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.4;
+  color: var(--saino-muted, #8696a0);
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+
   cursor: pointer;
   transition:
-    background-color 0.16s ease,
-    color 0.16s ease;
-  -webkit-tap-highlight-color: transparent;
+    background .18s ease,
+    color .18s ease;
 }
 
 .saino-message-reply-button:hover,
 .saino-message-reply-button:focus-visible {
-  background: rgba(0, 168, 132, 0.10);
-  color: var(--saino-primary, #00a884);
+  background: var(--saino-primary-soft, rgba(37, 211, 102, .12));
+  color: var(--saino-primary, #25d366);
+  outline: none;
 }
 
-.saino-message-reply-button:active {
-  background: rgba(0, 168, 132, 0.16);
+/* -------------------------
+   SWIPE TO REPLY
+   ------------------------- */
+
+.saino-message-row {
+  position: relative;
+  will-change: transform;
+  transition: transform .2s ease;
 }
 
-.saino-message-reply-button:focus-visible {
-  outline: 2px solid var(--saino-primary, #00a884);
-  outline-offset: 2px;
+.saino-message-row.saino-reply-swiping {
+  transition: none !important;
+  user-select: none;
 }
 
-/* Reply preview above composer */
+.saino-message-row.saino-reply-selected {
+  border-radius: 10px;
+  background: var(--saino-primary-soft, rgba(37, 211, 102, .07));
+}
+
+.saino-message-row.saino-reply-selected .saino-message {
+  position: relative;
+}
+
+/* -------------------------
+   COMPOSER REPLY PREVIEW
+   ------------------------- */
 
 .saino-reply-composer-preview {
+  position: relative;
+
   display: flex;
-  min-height: 58px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0 12px 8px;
-  padding: 9px 12px;
-  border-left: 4px solid #00a884;
-  border-radius: 9px;
-  background: var(--saino-panel, #f1f5f4);
-  color: var(--saino-text, #263238);
-  box-shadow: 0 1px 3px rgba(11, 20, 26, 0.06);
+  align-items: stretch;
+  gap: 10px;
+
+  margin: 0 12px 9px;
+  padding: 10px 11px;
+
+  overflow: hidden;
+
+  border: 1px solid var(--saino-border, #26343d);
+  border-left: 4px solid var(--saino-primary, #25d366);
+  border-radius: 11px;
+
+  background: var(--saino-surface-muted, #202c33);
+  color: var(--saino-text, #e9edef);
+
+  animation: saino-reply-preview-in .18s ease-out;
+}
+
+.saino-reply-preview-accent {
+  display: none;
 }
 
 .saino-reply-preview-copy {
@@ -65,77 +100,108 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
+  justify-content: center;
   gap: 4px;
+  overflow: hidden;
 }
 
 .saino-reply-preview-copy strong {
   overflow: hidden;
-  color: #00a884;
+
+  color: var(--saino-primary, #25d366);
+
   font-size: 12px;
-  font-weight: 700;
-  line-height: 1.4;
+  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .saino-reply-preview-copy span {
   overflow: hidden;
-  color: var(--saino-text, #263238);
-  font-size: 13px;
+
+  color: var(--saino-text-muted, #aebac1);
+
+  font-size: 12px;
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Cancel reply */
+/* Close reply */
 
 .saino-reply-close {
   display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
   place-items: center;
+
+  margin: auto 0;
+
   border: 0;
   border-radius: 50%;
+
   background: transparent;
-  color: var(--saino-muted, #667781);
-  font-family: inherit;
-  font-size: 23px;
-  font-weight: 300;
+  color: var(--saino-text-muted, #8696a0);
+
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+
   cursor: pointer;
+  transition:
+    background .18s ease,
+    color .18s ease;
 }
 
 .saino-reply-close:hover {
-  background: rgba(127, 127, 127, 0.13);
-  color: var(--saino-text, #263238);
+  background: rgba(255, 255, 255, .08);
+  color: var(--saino-text, #e9edef);
 }
 
-.saino-reply-close:focus-visible {
-  outline: 2px solid var(--saino-primary, #00a884);
-  outline-offset: 2px;
+.saino-reply-composer-preview[data-error="true"] {
+  border-left-color: #e05252;
 }
 
-/* Quoted message inside sent reply */
+/* -------------------------
+   QUOTED MESSAGE IN BUBBLE
+   ------------------------- */
 
 .saino-message-quoted {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+
   margin: 0 0 8px;
   padding: 8px 10px;
-  border-left: 4px solid #00a884;
-  border-radius: 7px;
-  background: rgba(0, 168, 132, 0.10);
+
   overflow: hidden;
+
+  border: 0;
+  border-left: 4px solid var(--saino-primary, #25d366);
+  border-radius: 7px;
+
+  background: rgba(0, 0, 0, .12);
+
+  text-align: left;
+  cursor: pointer;
+
+  transition: background .18s ease;
+}
+
+.saino-message-quoted:hover {
+  background: rgba(0, 0, 0, .2);
 }
 
 .saino-message-quoted strong {
   overflow: hidden;
-  color: #008f72;
+
+  color: var(--saino-primary, #25d366);
+
   font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
+  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -143,100 +209,132 @@
 .saino-message-quoted span {
   display: block;
   overflow: hidden;
-  color: var(--saino-text, #263238);
+
+  color: var(--saino-text, #e9edef);
+
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Reply error state */
+/* -------------------------
+   ORIGINAL MESSAGE HIGHLIGHT
+   ------------------------- */
 
-.saino-reply-composer-preview[data-error="true"] {
-  border-left-color: #d93025;
+.saino-reply-original-highlight {
+  border-radius: 10px;
+  background: var(--saino-primary-soft, rgba(37, 211, 102, .14)) !important;
+
+  animation: saino-original-message-highlight 1.5s ease;
 }
 
-.saino-reply-composer-preview[data-error="true"] strong {
-  color: #d93025;
+@keyframes saino-original-message-highlight {
+  0% {
+    background: var(--saino-primary-soft, rgba(37, 211, 102, .2));
+  }
+
+  100% {
+    background: transparent;
+  }
 }
 
-/* Dark theme */
+@keyframes saino-reply-preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
 
-[data-theme="dark"] .saino-message-reply-button,
-.dark .saino-message-reply-button {
-  color: #8696a0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-[data-theme="dark"] .saino-message-reply-button:hover,
-.dark .saino-message-reply-button:hover {
-  background: rgba(0, 168, 132, 0.13);
-  color: #4fd1b0;
+/* -------------------------
+   LIGHT THEME
+   ------------------------- */
+
+[data-theme="light"] .saino-reply-composer-preview {
+  background: #f0f2f5;
+  border-color: #dfe5e8;
+  border-left-color: #16a36a;
 }
 
-[data-theme="dark"] .saino-reply-composer-preview,
-.dark .saino-reply-composer-preview {
-  background: #202c33;
-  color: #e9edef;
+[data-theme="light"] .saino-reply-preview-copy span {
+  color: #667781;
 }
 
-[data-theme="dark"] .saino-reply-preview-copy strong,
-.dark .saino-reply-preview-copy strong {
-  color: #4fd1b0;
+[data-theme="light"] .saino-reply-close {
+  color: #667781;
 }
 
-[data-theme="dark"] .saino-reply-preview-copy span,
-.dark .saino-reply-preview-copy span {
-  color: #e9edef;
+[data-theme="light"] .saino-message-quoted {
+  background: rgba(0, 0, 0, .055);
 }
 
-[data-theme="dark"] .saino-reply-close,
-.dark .saino-reply-close {
-  color: #aebac1;
+[data-theme="light"] .saino-message-quoted:hover {
+  background: rgba(0, 0, 0, .1);
 }
 
-[data-theme="dark"] .saino-message-quoted,
-.dark .saino-message-quoted {
-  background: rgba(0, 168, 132, 0.13);
+[data-theme="light"] .saino-message-quoted span {
+  color: #46545d;
 }
 
-[data-theme="dark"] .saino-message-quoted strong,
-.dark .saino-message-quoted strong {
-  color: #4fd1b0;
-}
+/* -------------------------
+   MOBILE
+   ------------------------- */
 
-[data-theme="dark"] .saino-message-quoted span,
-.dark .saino-message-quoted span {
-  color: #c7d1d6;
-}
-
-/* Mobile */
-
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .saino-message-reply-button {
-    min-height: 25px;
-    padding: 3px 8px;
+    min-height: 30px;
+    padding: 4px 10px;
     font-size: 11px;
   }
 
   .saino-reply-composer-preview {
-    min-height: 54px;
+    gap: 8px;
     margin: 0 8px 7px;
-    padding: 8px 10px;
+    padding: 9px 10px;
+    border-radius: 10px;
+  }
+
+  .saino-reply-preview-copy strong {
+    font-size: 11px;
   }
 
   .saino-reply-preview-copy span {
     font-size: 12px;
   }
 
+  .saino-reply-close {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+
   .saino-message-quoted {
+    margin-bottom: 7px;
     padding: 7px 9px;
+    border-radius: 7px;
+  }
+
+  .saino-message-quoted strong {
+    font-size: 11px;
+  }
+
+  .saino-message-quoted span {
+    font-size: 12px;
   }
 }
 
-/* Reduced motion */
+/* Accessibility: reduce motion */
 
 @media (prefers-reduced-motion: reduce) {
-  .saino-message-reply-button {
-    transition: none;
+  .saino-message-row,
+  .saino-reply-composer-preview,
+  .saino-reply-original-highlight {
+    animation: none !important;
+    transition: none !important;
   }
 }
