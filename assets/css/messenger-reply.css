@@ -1,95 +1,242 @@
 
-/* Saino message reply controls and quoted-message previews */
+/* =========================================================
+   SAINO — WHATSAPP STYLE REPLY UI
+   UI ONLY — Existing reply logic preserved
+   ========================================================= */
+
+/* Reply button under each message */
 
 .saino-message-reply-button {
   display: inline-flex;
+  min-height: 27px;
   align-items: center;
   justify-content: center;
-  margin-top: 5px;
-  padding: 2px 7px;
+  margin: 5px 0 0;
+  padding: 3px 9px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--saino-muted, #667781);
-  font: inherit;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
   cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .saino-message-reply-button:hover,
 .saino-message-reply-button:focus-visible {
-  background: rgba(100, 116, 139, 0.12);
-  color: var(--saino-text, #263238);
+  background: rgba(0, 168, 132, 0.10);
+  color: var(--saino-primary, #00a884);
 }
+
+.saino-message-reply-button:active {
+  background: rgba(0, 168, 132, 0.16);
+}
+
+.saino-message-reply-button:focus-visible {
+  outline: 2px solid var(--saino-primary, #00a884);
+  outline-offset: 2px;
+}
+
+/* Reply preview above composer */
 
 .saino-reply-composer-preview {
   display: flex;
+  min-height: 58px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin: 0 12px 8px;
   padding: 9px 12px;
-  border-left: 3px solid #16a36a;
-  border-radius: 7px;
+  border-left: 4px solid #00a884;
+  border-radius: 9px;
   background: var(--saino-panel, #f1f5f4);
+  color: var(--saino-text, #263238);
+  box-shadow: 0 1px 3px rgba(11, 20, 26, 0.06);
 }
 
 .saino-reply-preview-copy {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .saino-reply-preview-copy strong {
-  color: #16a36a;
+  overflow: hidden;
+  color: #00a884;
   font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .saino-reply-preview-copy span {
   overflow: hidden;
   color: var(--saino-text, #263238);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Cancel reply */
+
 .saino-reply-close {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
   border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--saino-muted, #667781);
-  font-size: 21px;
+  font-family: inherit;
+  font-size: 23px;
+  font-weight: 300;
   cursor: pointer;
 }
 
+.saino-reply-close:hover {
+  background: rgba(127, 127, 127, 0.13);
+  color: var(--saino-text, #263238);
+}
+
+.saino-reply-close:focus-visible {
+  outline: 2px solid var(--saino-primary, #00a884);
+  outline-offset: 2px;
+}
+
+/* Quoted message inside sent reply */
+
 .saino-message-quoted {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: 3px;
-  margin-bottom: 7px;
-  padding: 6px 9px;
-  border-left: 3px solid #16a36a;
-  border-radius: 5px;
-  background: rgba(100, 116, 139, 0.09);
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-left: 4px solid #00a884;
+  border-radius: 7px;
+  background: rgba(0, 168, 132, 0.10);
+  overflow: hidden;
 }
 
 .saino-message-quoted strong {
-  color: #16a36a;
-  font-size: 11px;
-}
-
-.saino-message-quoted span {
   overflow: hidden;
-  color: var(--saino-muted, #667781);
-  font-size: 12px;
+  color: #008f72;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.saino-message-quoted span {
+  display: block;
+  overflow: hidden;
+  color: var(--saino-text, #263238);
+  font-size: 12px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Reply error state */
+
 .saino-reply-composer-preview[data-error="true"] {
-  border-left-color: #c84b4b;
+  border-left-color: #d93025;
+}
+
+.saino-reply-composer-preview[data-error="true"] strong {
+  color: #d93025;
+}
+
+/* Dark theme */
+
+[data-theme="dark"] .saino-message-reply-button,
+.dark .saino-message-reply-button {
+  color: #8696a0;
+}
+
+[data-theme="dark"] .saino-message-reply-button:hover,
+.dark .saino-message-reply-button:hover {
+  background: rgba(0, 168, 132, 0.13);
+  color: #4fd1b0;
+}
+
+[data-theme="dark"] .saino-reply-composer-preview,
+.dark .saino-reply-composer-preview {
+  background: #202c33;
+  color: #e9edef;
+}
+
+[data-theme="dark"] .saino-reply-preview-copy strong,
+.dark .saino-reply-preview-copy strong {
+  color: #4fd1b0;
+}
+
+[data-theme="dark"] .saino-reply-preview-copy span,
+.dark .saino-reply-preview-copy span {
+  color: #e9edef;
+}
+
+[data-theme="dark"] .saino-reply-close,
+.dark .saino-reply-close {
+  color: #aebac1;
+}
+
+[data-theme="dark"] .saino-message-quoted,
+.dark .saino-message-quoted {
+  background: rgba(0, 168, 132, 0.13);
+}
+
+[data-theme="dark"] .saino-message-quoted strong,
+.dark .saino-message-quoted strong {
+  color: #4fd1b0;
+}
+
+[data-theme="dark"] .saino-message-quoted span,
+.dark .saino-message-quoted span {
+  color: #c7d1d6;
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .saino-message-reply-button {
+    min-height: 25px;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .saino-reply-composer-preview {
+    min-height: 54px;
+    margin: 0 8px 7px;
+    padding: 8px 10px;
+  }
+
+  .saino-reply-preview-copy span {
+    font-size: 12px;
+  }
+
+  .saino-message-quoted {
+    padding: 7px 9px;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-message-reply-button {
+    transition: none;
+  }
 }
