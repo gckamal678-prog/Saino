@@ -260,7 +260,15 @@
     panel.innerHTML = `
       <header class="saino-feed-header">
 
-        <div>
+        <button
+          type="button"
+          class="saino-button-secondary saino-feed-back"
+          data-feed-action="close"
+          aria-label="${text("Back to chats", "च्याटमा फर्कनुहोस्")}"
+          title="${text("Back to chats", "च्याटमा फर्कनुहोस्")}"
+        >×</button>
+
+        <div class="saino-feed-heading">
           <h1>${text("Feed", "फिड")}</h1>
 
           <p>
@@ -649,6 +657,11 @@
     const action = target.closest("[data-feed-action]");
 
     if (!action) return;
+
+    if (action.dataset.feedAction === "close") {
+      showChats();
+      return;
+    }
 
     if (action.dataset.feedAction === "refresh") {
       loadFeed();
