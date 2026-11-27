@@ -129,19 +129,27 @@
         : t("No messages yet", "अहिलेसम्म सन्देश छैन"));
 
     return `
-      <button type="button" class="saino-group-row" data-group-open="${esc(g.id)}">
-        <span class="saino-group-avatar">${personAvatar({name:g.name}, "👥")}</span>
-        <span class="saino-group-row-main">
-          <span class="saino-group-row-top">
-            <strong>${esc(g.name || t("Group", "समूह"))}</strong>
-            <time>${esc(dateLabel(g.lastMessageAt || g.createdAt))}</time>
+      <div class="saino-group-row">
+        <button type="button" data-group-open="${esc(g.id)}"
+          aria-label="${esc(t("Open chat with", "समूह कुराकानी खोल्नुहोस्") + " " + (g.name || t("Group", "समूह")))}"
+          style="display:flex;align-items:center;gap:13px;flex:1;min-width:0;width:100%;padding:0;border:0;color:inherit;background:transparent;text-align:left;cursor:pointer">
+          <span class="saino-group-avatar">${personAvatar({name:g.name}, "👥")}</span>
+          <span class="saino-group-row-main">
+            <span class="saino-group-row-top">
+              <strong>${esc(g.name || t("Group", "समूह"))}</strong>
+              <time>${esc(dateLabel(g.lastMessageAt || g.createdAt))}</time>
+            </span>
+            <span class="saino-group-row-bottom">
+              <span>${esc(preview)}</span>
+              <small>${(g.members || []).length} ${t("members", "सदस्य")}</small>
+            </span>
           </span>
-          <span class="saino-group-row-bottom">
-            <span>${esc(preview)}</span>
-            <small>${(g.members || []).length} ${t("members", "सदस्य")}</small>
-          </span>
-        </span>
-      </button>`;
+        </button>
+        <button type="button" data-group-details="${esc(g.id)}"
+          aria-label="${esc(t("Group details", "समूह विवरण"))}"
+          title="${esc(t("Group details", "समूह विवरण"))}"
+          style="flex:0 0 36px;width:36px;height:36px;margin-left:4px;border:0;border-radius:50%;color:var(--saino-muted,#667781);background:transparent;font-size:21px;cursor:pointer">ⓘ</button>
+      </div>`;
   }
 
   function searchBox(placeholder) {
@@ -272,19 +280,18 @@
             <span class="saino-group-person-name">
               ${esc(m.name || t("Member", "सदस्य"))}
               ${m.role === "owner" ? `<small>${t("Group owner", "समूह Owner")}</small>` : ""}
+              ${m.role === "admin" ? `<small>${t("Group admin", "समूह Admin")}</small>` : ""}
             </span>
-            <span class="saino-group-role">${m.role === "owner" ? "Owner" : m.role === "admin" ? "Admin" : t("Member", "सदस्य")}</span>
-            ${admin && String(m.id) !== userId && m.role !== "owner" &&
-              (owner || m.role === "member")
-              ? `<button type="button" class="saino-group-more" data-member-menu="${esc(m.id)}" aria-label="${t("Member actions", "सदस्यका कार्यहरू")}">⋮</button>`
-              : ""}
+            ${m.id !== userId && (owner || (admin && m.role === "member")) ? `
+              <button type="button" data-member-menu="${esc(m.id)}" aria-label="${t("Member options", "सदस्य विकल्प")}">⋮</button>
+              ${memberMenu === String(m.id) ? `
+                <div class="saino-group-member-actions">
+                  ${owner && m.role === "member" ? `<button type="button" data-member-action="promote" data-member-id="${esc(m.id)}">${t("Make admin", "Admin बनाउनुहोस्")}</button>` : ""}
+                  ${owner && m.role === "admin" ? `<button type="button" data-member-action="demote" data-member-id="${esc(m.id)}">${t("Remove admin", "Admin हटाउनुहोस्")}</button>` : ""}
+                  ${(owner || m.role === "member") ? `<button type="button" data-member-action="remove" data-member-id="${esc(m.id)}">${t("Remove member", "सदस्य हटाउनुहोस्")}</button>` : ""}
+                </div>` : ""}
+            ` : ""}
           </div>
-          ${memberMenu === String(m.id) && admin && String(m.id) !== userId && m.role !== "owner" ? `
-            <div class="saino-member-actions">
-              ${owner && m.role === "member" ? `<button type="button" data-member-action="promote" data-member-id="${esc(m.id)}">${t("Make admin", "Admin बनाउनुहोस्")}</button>` : ""}
-              ${owner && m.role === "admin" ? `<button type="button" data-member-action="demote" data-member-id="${esc(m.id)}">${t("Remove admin", "Admin हटाउनुहोस्")}</button>` : ""}
-              ${(owner || m.role === "member") ? `<button type="button" data-member-action="remove" data-member-id="${esc(m.id)}">${t("Remove member", "सदस्य हटाउनुहोस्")}</button>` : ""}
-            </div>` : ""}
         `).join("")}
       </div>
       <div class="saino-group-danger-zone">
@@ -400,6 +407,24 @@
     }
   }
 
+  function openConversation(id) {
+    const group = groups.find(g => String(g.id) === String(id));
+    if (!group?.id) return;
+
+    const conversation = {
+      ...group,
+      id: String(group.id),
+      type: "group",
+      name: group.name || group.title || t("Group", "समूह"),
+      title: group.title || group.name || t("Group", "समूह")
+    };
+
+    close();
+    global.dispatchEvent(new CustomEvent("saino:conversation-select", {
+      detail: { conversation }
+    }));
+  }
+
   async function openDetails(id) {
     activeGroup = groups.find(g => String(g.id) === String(id)) || null;
     if (!activeGroup) return;
@@ -482,8 +507,11 @@
       return;
     }
 
+    const details = e.target.closest("[data-group-details]");
+    if (details) { await openDetails(details.dataset.groupDetails); return; }
+
     const row = e.target.closest("[data-group-open]");
-    if (row) { await openDetails(row.dataset.groupOpen); return; }
+    if (row) { openConversation(row.dataset.groupOpen); return; }
 
     if (e.target.closest("[data-group-picker-submit]")) { await submitPicker(); return; }
     if (e.target.closest("[data-group-add]")) { await startAdd(); return; }
