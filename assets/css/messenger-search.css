@@ -1,62 +1,127 @@
 
-/* Saino in-conversation message search */
+/* =========================================================
+   SAINO — WHATSAPP STYLE MESSAGE SEARCH
+   UI ONLY — Search functionality untouched
+========================================================= */
 
 .saino-search-toggle {
-  font-size: 25px;
-  line-height: 1;
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--saino-text-muted, #71817c);
+  font-size: 23px;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
 }
+
+.saino-search-toggle:hover,
+.saino-search-toggle[aria-expanded="true"] {
+  background: var(--saino-primary-soft, #e5f5ef);
+  color: var(--saino-primary, #008f72);
+}
+
+/* SEARCH PANEL */
 
 .saino-search-panel {
   position: relative;
-  z-index: 4;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--saino-border, #e6ece9);
+  z-index: 20;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--saino-border, #e8eeeb);
   background: var(--saino-surface, #fff);
-  box-shadow: 0 3px 10px rgba(20, 50, 42, 0.06);
+  box-shadow: 0 3px 12px rgba(0,0,0,.06);
 }
+
+.saino-search-panel[hidden] {
+  display: none !important;
+}
+
+/* SEARCH FORM */
 
 .saino-search-form {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
+  width: 100%;
 }
 
 .saino-search-form input {
   width: 100%;
   min-width: 0;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--saino-border, #e6ece9);
-  border-radius: 20px;
-  background: var(--saino-surface-muted, #f7f9f8);
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--saino-border, #e8eeeb);
+  border-radius: 25px;
+  outline: none;
+  background: var(--saino-surface-muted, #f6f8f7);
   color: var(--saino-text, #172b27);
+  font-size: 14px;
+  transition: border .18s ease, background .18s ease;
 }
+
+.saino-search-form input::placeholder {
+  color: var(--saino-text-muted, #71817c);
+}
+
+.saino-search-form input:focus {
+  border-color: var(--saino-primary, #008f72);
+  background: var(--saino-surface, #fff);
+}
+
+/* SEARCH BUTTON */
 
 .saino-search-submit {
-  min-height: 40px;
-  padding: 0 13px;
+  display: inline-flex;
+  min-height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
   border: 0;
-  border-radius: 20px;
-  background: var(--saino-primary, #087f68);
+  border-radius: 24px;
+  background: var(--saino-primary, #008f72);
   color: #fff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s ease;
 }
 
+.saino-search-submit:hover {
+  background: var(--saino-primary-dark, #006e59);
+}
+
+/* CLOSE BUTTON */
+
 .saino-search-close {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--saino-text-muted, #71817c);
-  font-size: 24px;
+  font-size: 25px;
+  cursor: pointer;
 }
+
+.saino-search-close:hover {
+  background: var(--saino-surface-muted, #f6f8f7);
+  color: var(--saino-danger, #d94343);
+}
+
+/* SEARCH STATUS */
 
 .saino-search-status {
   min-height: 18px;
-  margin: 7px 2px 4px;
+  margin: 9px 4px 6px;
   color: var(--saino-text-muted, #71817c);
   font-size: 12px;
 }
@@ -65,38 +130,50 @@
   color: var(--saino-danger, #d94343);
 }
 
+/* SEARCH RESULTS */
+
 .saino-search-results {
   display: flex;
-  max-height: 220px;
+  max-height: 260px;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .saino-search-result {
   display: flex;
+  width: 100%;
+  min-height: 52px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  width: 100%;
-  padding: 9px 10px;
-  border: 1px solid var(--saino-border, #e6ece9);
-  border-radius: 9px;
-  background: var(--saino-surface-muted, #f7f9f8);
+  padding: 10px 13px;
+  border: 1px solid var(--saino-border, #e8eeeb);
+  border-radius: 12px;
+  background: var(--saino-surface-muted, #f6f8f7);
   color: var(--saino-text, #172b27);
   text-align: left;
+  cursor: pointer;
+  transition: background .18s ease, border .18s ease;
 }
 
-.saino-search-result:hover,
-.saino-search-result:focus-visible {
-  border-color: var(--saino-primary, #087f68);
+.saino-search-result:hover {
+  border-color: var(--saino-primary, #008f72);
   background: var(--saino-primary-soft, #e5f5ef);
+}
+
+.saino-search-result:focus-visible {
+  outline: 2px solid var(--saino-primary, #008f72);
+  outline-offset: 2px;
 }
 
 .saino-search-result-text {
   min-width: 0;
   overflow: hidden;
+  color: inherit;
   font-size: 13px;
+  line-height: 1.5;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -105,31 +182,171 @@
   flex: 0 0 auto;
   color: var(--saino-text-muted, #71817c);
   font-size: 10px;
+  white-space: nowrap;
 }
 
+/* EMPTY RESULT */
+
 .saino-search-empty {
-  margin: 8px 2px;
+  margin: 12px 4px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--saino-surface-muted, #f6f8f7);
   color: var(--saino-text-muted, #71817c);
   font-size: 13px;
+  text-align: center;
+}
+
+/* SELECTED MESSAGE */
+
+.saino-message-row.saino-search-result-active {
+  position: relative;
+  z-index: 2;
+  border-radius: 13px;
+  background: rgba(0,143,114,.10);
 }
 
 .saino-message-row.saino-search-result-active .saino-message {
-  outline: 2px solid var(--saino-primary, #087f68);
+  outline: 2px solid var(--saino-primary, #008f72);
   outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(0,143,114,.10);
 }
 
-@media (max-width: 480px) {
+/* =========================================================
+   MOBILE — DARK WHATSAPP STYLE
+========================================================= */
+
+@media (max-width: 640px) {
+  .saino-search-toggle {
+    width: 38px;
+    height: 38px;
+    color: #aebac1;
+    font-size: 22px;
+  }
+
+  .saino-search-toggle:hover,
+  .saino-search-toggle[aria-expanded="true"] {
+    background: rgba(32,200,117,.13);
+    color: #20c875;
+  }
+
   .saino-search-panel {
-    padding: 8px 10px;
+    padding: 10px 11px;
+    border-color: rgba(134,150,160,.14);
+    background: #172229;
+    box-shadow: 0 5px 14px rgba(0,0,0,.2);
+  }
+
+  .saino-search-form {
+    gap: 6px;
+  }
+
+  .saino-search-form input {
+    min-height: 43px;
+    padding: 0 13px;
+    border-color: transparent;
+    border-radius: 24px;
+    background: #26343c;
+    color: #e9edef;
+    font-size: 13px;
+  }
+
+  .saino-search-form input::placeholder {
+    color: #aebac1;
+  }
+
+  .saino-search-form input:focus {
+    border-color: rgba(32,200,117,.5);
+    background: #26343c;
   }
 
   .saino-search-submit {
-    padding: 0 10px;
+    min-height: 40px;
+    padding: 0 13px;
+    border-radius: 22px;
+    background: #20c875;
+    color: #062b1b;
+    font-size: 12px;
+  }
+
+  .saino-search-submit:hover {
+    background: #16a765;
+  }
+
+  .saino-search-close {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    color: #aebac1;
+    font-size: 23px;
+  }
+
+  .saino-search-close:hover {
+    background: #26343c;
+    color: #e9edef;
+  }
+
+  .saino-search-status {
+    margin: 9px 4px 7px;
+    color: #aebac1;
+    font-size: 11px;
+  }
+
+  .saino-search-status[data-error="true"] {
+    color: #ff8585;
+  }
+
+  .saino-search-results {
+    max-height: 220px;
+    gap: 6px;
   }
 
   .saino-search-result {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 3px;
+    min-height: 48px;
+    gap: 8px;
+    padding: 9px 11px;
+    border-color: rgba(134,150,160,.14);
+    border-radius: 11px;
+    background: #202c33;
+    color: #e9edef;
+  }
+
+  .saino-search-result:hover {
+    border-color: rgba(32,200,117,.5);
+    background: #263a36;
+  }
+
+  .saino-search-result-text {
+    color: #e9edef;
+    font-size: 12px;
+  }
+
+  .saino-search-result time {
+    color: #aebac1;
+    font-size: 10px;
+  }
+
+  .saino-search-empty {
+    padding: 13px;
+    border-radius: 11px;
+    background: #202c33;
+    color: #aebac1;
+    font-size: 12px;
+  }
+
+  .saino-message-row.saino-search-result-active .saino-message {
+    outline-color: #20c875;
+    box-shadow: 0 0 0 5px rgba(32,200,117,.12);
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-search-toggle,
+  .saino-search-form input,
+  .saino-search-submit,
+  .saino-search-result {
+    transition: none;
   }
 }
