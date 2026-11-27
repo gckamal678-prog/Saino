@@ -182,6 +182,10 @@
   function renderPicker(mode) {
     const existing = new Set((activeGroup?.members || []).map(m => String(m.id)));
 
+    const maxSelectable = mode === "create"
+      ? 49
+      : Math.max(0, 50 - existing.size);
+    const atCapacity = selected.size >= maxSelectable;
     const people = friends.filter(p => {
       const id = String(p.id || p.userId || "");
       return id && !existing.has(id) &&
@@ -203,7 +207,7 @@
             placeholder="${t("Enter group name", "समूहको नाम लेख्नुहोस्")}">
         </label>` : ""}
       <p class="saino-group-selection-count">
-        ${selected.size} ${t("selected", "जना छानिए")}
+        ${selected.size} ${t("selected", "जना छानिए")} · ${t("Maximum", "अधिकतम")} ${maxSelectable}
       </p>
       ${searchBox(t("Search friends", "साथी खोज्नुहोस्"))}
       ${!people.length ? `
@@ -220,7 +224,7 @@
             <label class="saino-group-friend">
               <span class="saino-group-person-avatar">${personAvatar(p)}</span>
               <span class="saino-group-person-name">${esc(p.name || t("Friend", "साथी"))}</span>
-              <input type="checkbox" data-group-friend="${esc(id)}" ${checked ? "checked" : ""}>
+              <input type="checkbox" data-group-friend="${esc(id)}" ${checked ? "checked" : ""} ${!checked && atCapacity ? "disabled" : ""}>
               <span class="saino-group-check">${checked ? "✓" : ""}</span>
             </label>`;
         }).join("")}
@@ -240,7 +244,9 @@
     if (!activeGroup) return renderList();
 
     const members = activeGroup.members || [];
-    const admin = activeGroup.role === "admin";
+    const owner = activeGroup.role === "owner";
+    const admin = owner || activeGroup.role === "admin";
+    const userId = currentUserId();
 
     return `
       <div class="saino-group-subheader">
@@ -265,23 +271,26 @@
             <span class="saino-group-person-avatar">${personAvatar(m)}</span>
             <span class="saino-group-person-name">
               ${esc(m.name || t("Member", "सदस्य"))}
-              ${m.id === activeGroup.createdBy ? `<small>${t("Group creator", "समूह निर्माता")}</small>` : ""}
+              ${m.role === "owner" ? `<small>${t("Group owner", "समूह Owner")}</small>` : ""}
             </span>
-            <span class="saino-group-role">${m.role === "admin" ? "Admin" : t("Member", "सदस्य")}</span>
-            ${admin && String(m.id) !== currentUserId()
-              ? `<button type="button" class="saino-group-more" data-member-menu="${esc(m.id)}">⋮</button>`
+            <span class="saino-group-role">${m.role === "owner" ? "Owner" : m.role === "admin" ? "Admin" : t("Member", "सदस्य")}</span>
+            ${admin && String(m.id) !== userId && m.role !== "owner" &&
+              (owner || m.role === "member")
+              ? `<button type="button" class="saino-group-more" data-member-menu="${esc(m.id)}" aria-label="${t("Member actions", "सदस्यका कार्यहरू")}">⋮</button>`
               : ""}
           </div>
-          ${memberMenu === String(m.id) ? `
+          ${memberMenu === String(m.id) && admin && String(m.id) !== userId && m.role !== "owner" ? `
             <div class="saino-member-actions">
-              <button data-member-action="promote" data-member-id="${esc(m.id)}">${t("Make admin", "Admin बनाउनुहोस्")}</button>
-              <button data-member-action="demote" data-member-id="${esc(m.id)}">${t("Remove admin", "Admin हटाउनुहोस्")}</button>
-              <button data-member-action="remove" data-member-id="${esc(m.id)}">${t("Remove member", "सदस्य हटाउनुहोस्")}</button>
+              ${owner && m.role === "member" ? `<button type="button" data-member-action="promote" data-member-id="${esc(m.id)}">${t("Make admin", "Admin बनाउनुहोस्")}</button>` : ""}
+              ${owner && m.role === "admin" ? `<button type="button" data-member-action="demote" data-member-id="${esc(m.id)}">${t("Remove admin", "Admin हटाउनुहोस्")}</button>` : ""}
+              ${(owner || m.role === "member") ? `<button type="button" data-member-action="remove" data-member-id="${esc(m.id)}">${t("Remove member", "सदस्य हटाउनुहोस्")}</button>` : ""}
             </div>` : ""}
         `).join("")}
       </div>
       <div class="saino-group-danger-zone">
-        <button type="button" data-group-leave>${t("Exit group", "समूह छोड्नुहोस्")}</button>
+        ${owner
+          ? `<p>${t("The group owner cannot leave until ownership is transferred.", "Ownership हस्तान्तरण नगरी Group Owner बाहिरिन मिल्दैन।")}</p>`
+          : `<button type="button" data-group-leave>${t("Exit group", "समूह छोड्नुहोस्")}</button>`}
       </div>`;
   }
 
@@ -400,12 +409,21 @@
   }
 
   async function memberAction(action, id) {
-    if (!activeGroup || !["promote", "demote", "remove"].includes(action)) return;
+    if (busy || !activeGroup || !["promote", "demote", "remove"].includes(action)) return;
 
     if (action === "remove" &&
         !global.confirm(t("Remove this member from the group?", "यो सदस्यलाई समूहबाट हटाउने?"))) return;
 
-    const result = await messages().manageGroupMember(activeGroup.id, action, id);
+    busy = true;
+    render();
+    let result;
+    try {
+      result = await messages().manageGroupMember(activeGroup.id, action, id);
+    } catch (error) {
+      result = { ok: false, message: error?.message || "Request failed." };
+    } finally {
+      busy = false;
+    }
 
     if (!result?.ok) {
       setNotice(result?.message || t("Could not update member.", "सदस्य परिवर्तन गर्न सकिएन।"), "error");
@@ -423,6 +441,7 @@
   }
 
   async function leaveGroup() {
+    if (busy || activeGroup?.role === "owner") return;
     const userId = currentUserId();
 
     if (!activeGroup || !userId) {
