@@ -1,30 +1,50 @@
 
-/* SAINO — MESSENGER MEDIA */
+/* =========================================================
+   SAINO — WHATSAPP STYLE MESSENGER MEDIA
+   UI ONLY — No JavaScript changes
+   ========================================================= */
+
+/* Media attachment button */
 
 .saino-media-button {
   display: grid;
   width: 42px;
-  height: 46px;
+  height: 44px;
   flex: 0 0 42px;
   place-items: center;
   align-self: flex-end;
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--saino-primary);
-  font-size: 29px;
+  color: var(--saino-primary, #00a884);
+  font-size: 27px;
   line-height: 1;
-  transition: background 0.18s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.18s ease,
+    transform 0.18s ease;
 }
 
-.saino-media-button:hover {
-  background: var(--saino-primary-soft);
+.saino-media-button:hover:not(:disabled) {
+  background: var(--saino-primary-soft, rgba(0, 168, 132, 0.12));
+}
+
+.saino-media-button:active:not(:disabled) {
+  transform: scale(0.91);
+}
+
+.saino-media-button:focus-visible {
+  outline: 2px solid var(--saino-primary, #00a884);
+  outline-offset: 2px;
 }
 
 .saino-media-button:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: wait;
 }
+
+/* Image attachments */
 
 .saino-media-image-link {
   display: block;
@@ -32,42 +52,74 @@
   margin: 5px 0 8px;
   overflow: hidden;
   border-radius: 12px;
+  background: var(--saino-surface-muted, #f0f2f5);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .saino-media-image {
   display: block;
   width: 100%;
   max-height: 340px;
+  border-radius: inherit;
   object-fit: cover;
-  background: var(--saino-surface-muted);
+  background: var(--saino-surface-muted, #f0f2f5);
+  transition: transform 0.2s ease;
 }
+
+.saino-media-image-link:hover .saino-media-image {
+  transform: scale(1.015);
+}
+
+/* Video attachments */
 
 .saino-media-video {
   display: block;
   width: min(100%, 340px);
   max-height: 360px;
   margin: 5px 0 8px;
+  overflow: hidden;
   border-radius: 12px;
   background: #111;
+  object-fit: contain;
 }
+
+/* File attachments */
 
 .saino-media-file {
   display: flex;
   width: min(100%, 320px);
   min-width: 190px;
+  min-height: 68px;
   align-items: center;
   gap: 12px;
   margin: 5px 0 8px;
-  padding: 12px;
-  border: 1px solid var(--saino-border);
+  padding: 11px 13px;
+  overflow: hidden;
+  border: 1px solid var(--saino-border, #e9edef);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.72);
-  color: var(--saino-text);
+  color: var(--saino-text, #202c33);
   text-decoration: none;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .saino-media-file:hover {
-  background: var(--saino-primary-soft);
+  border-color: var(--saino-primary, #00a884);
+  background: var(--saino-primary-soft, rgba(0, 168, 132, 0.08));
+}
+
+.saino-media-file:active {
+  transform: scale(0.985);
+}
+
+.saino-media-file:focus-visible {
+  outline: 2px solid var(--saino-primary, #00a884);
+  outline-offset: 2px;
 }
 
 .saino-media-file-icon {
@@ -76,9 +128,9 @@
   height: 48px;
   flex: 0 0 44px;
   place-items: center;
-  border-radius: 8px;
-  background: var(--saino-primary-soft);
-  color: var(--saino-primary);
+  border-radius: 9px;
+  background: var(--saino-primary-soft, rgba(0, 168, 132, 0.12));
+  color: var(--saino-primary, #00a884);
   font-size: 11px;
   font-weight: 800;
 }
@@ -86,46 +138,116 @@
 .saino-media-file-details {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .saino-media-file-details strong {
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  color: var(--saino-text, #202c33);
   font-size: 13px;
   font-weight: 650;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .saino-media-file-details small {
-  color: var(--saino-text-muted);
+  color: var(--saino-text-muted, #667781);
   font-size: 11px;
+  line-height: 1.4;
 }
+
+/* Unavailable media message */
 
 .saino-media-unavailable {
   margin: 5px 0 8px;
   padding: 10px 12px;
+  border: 1px solid var(--saino-border, #e9edef);
   border-radius: 10px;
-  background: var(--saino-surface-muted);
-  color: var(--saino-text-muted);
+  background: var(--saino-surface-muted, #f0f2f5);
+  color: var(--saino-text-muted, #667781);
   font-size: 12px;
+  line-height: 1.5;
 }
+
+/* Empty message text */
 
 .saino-message-text:empty {
   display: none;
 }
 
+/* Dark theme */
+
+[data-theme="dark"] .saino-media-file,
+.dark .saino-media-file {
+  border-color: var(--saino-border, #34434b);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--saino-text, #e9edef);
+}
+
+[data-theme="dark"] .saino-media-file:hover,
+.dark .saino-media-file:hover {
+  border-color: var(--saino-primary, #00a884);
+  background: rgba(0, 168, 132, 0.12);
+}
+
+[data-theme="dark"] .saino-media-file-details strong,
+.dark .saino-media-file-details strong {
+  color: var(--saino-text, #e9edef);
+}
+
+[data-theme="dark"] .saino-media-file-details small,
+.dark .saino-media-file-details small {
+  color: var(--saino-text-muted, #aebac1);
+}
+
+[data-theme="dark"] .saino-media-unavailable,
+.dark .saino-media-unavailable {
+  border-color: var(--saino-border, #34434b);
+  background: var(--saino-surface-muted, #182229);
+  color: var(--saino-text-muted, #aebac1);
+}
+
+/* Mobile */
+
 @media (max-width: 480px) {
   .saino-media-image-link,
-  .saino-media-video {
-    max-width: min(75vw, 300px);
-  }
-
+  .saino-media-video,
   .saino-media-file {
     max-width: min(75vw, 300px);
   }
 
+  .saino-media-image {
+    max-height: 300px;
+  }
+
+  .saino-media-video {
+    max-height: 320px;
+  }
+
   .saino-media-button {
     width: 38px;
+    height: 42px;
     flex-basis: 38px;
+    font-size: 25px;
+  }
+
+  .saino-media-file {
+    min-width: 170px;
+    min-height: 64px;
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-media-button,
+  .saino-media-image,
+  .saino-media-file {
+    transition: none;
   }
 }
