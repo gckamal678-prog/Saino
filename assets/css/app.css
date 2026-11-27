@@ -1,54 +1,36 @@
 
 /* =========================================================
    SAINO — MAIN APPLICATION STYLES
-   Mobile-first | English + नेपाली | WhatsApp-inspired
+   WhatsApp-inspired mobile interface
 ========================================================= */
 
 :root {
   color-scheme: light;
-
   --saino-primary: #087f68;
   --saino-primary-dark: #066653;
   --saino-primary-soft: #e5f5ef;
-
   --saino-bg: #f4f7f6;
   --saino-surface: #ffffff;
   --saino-surface-muted: #f7f9f8;
-
   --saino-text: #172b27;
   --saino-text-muted: #71817c;
   --saino-border: #e6ece9;
-
   --saino-message-out: #d9fdd3;
   --saino-message-in: #ffffff;
-
   --saino-danger: #d94343;
   --saino-success: #15966f;
-
   --saino-radius-sm: 8px;
   --saino-radius-md: 14px;
   --saino-radius-lg: 20px;
-
-  --saino-shadow: 0 2px 12px rgba(20, 50, 42, 0.07);
-
+  --saino-shadow: 0 2px 12px rgba(20, 50, 42, .07);
   --saino-header-height: 64px;
   --saino-sidebar-width: 390px;
-
-  font-family:
-    Inter,
-    "Noto Sans Devanagari",
-    "Noto Sans",
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: Inter, "Noto Sans Devanagari", "Noto Sans", system-ui, -apple-system, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body {
+html, body {
   width: 100%;
   min-width: 320px;
   min-height: 100%;
@@ -63,39 +45,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-button,
-input,
-textarea,
-select {
-  outline-color: var(--saino-primary);
-}
-
-img {
-  display: block;
-  max-width: 100%;
-}
-
-[hidden] {
-  display: none !important;
-}
-
-/* APP ROOT */
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+button, input, textarea, select { outline-color: var(--saino-primary); }
+img { display: block; max-width: 100%; }
+[hidden] { display: none !important; }
 
 #saino-app {
   width: 100%;
@@ -111,8 +66,6 @@ img {
   background: var(--saino-surface);
 }
 
-/* COMMON */
-
 .saino-icon-button {
   display: inline-flex;
   width: 42px;
@@ -124,9 +77,7 @@ img {
   border-radius: 50%;
   background: transparent;
   color: var(--saino-text-muted);
-  transition:
-    background 0.18s ease,
-    color 0.18s ease;
+  transition: background .18s ease, color .18s ease;
 }
 
 .saino-icon-button:hover {
@@ -146,12 +97,9 @@ img {
   background: var(--saino-primary);
   color: #fff;
   font-weight: 600;
-  transition: background 0.18s ease;
 }
 
-.saino-button:hover {
-  background: var(--saino-primary-dark);
-}
+.saino-button:hover { background: var(--saino-primary-dark); }
 
 .saino-button-secondary {
   border: 1px solid var(--saino-border);
@@ -159,13 +107,8 @@ img {
   color: var(--saino-text);
 }
 
-.saino-button-secondary:hover {
-  background: var(--saino-surface-muted);
-}
-
-.saino-muted {
-  color: var(--saino-text-muted);
-}
+.saino-button-secondary:hover { background: var(--saino-surface-muted); }
+.saino-muted { color: var(--saino-text-muted); }
 
 .saino-divider {
   height: 1px;
@@ -173,7 +116,7 @@ img {
   background: var(--saino-border);
 }
 
-/* MAIN SIDEBAR */
+/* SIDEBAR */
 
 .saino-sidebar {
   display: flex;
@@ -202,7 +145,7 @@ img {
   color: var(--saino-primary);
   font-size: 23px;
   font-weight: 800;
-  letter-spacing: -0.7px;
+  letter-spacing: -.7px;
 }
 
 .saino-brand-mark {
@@ -294,16 +237,11 @@ img {
   padding: 11px 15px;
   border-bottom: 1px solid var(--saino-border);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background .15s ease;
 }
 
-.saino-chat-item:hover {
-  background: var(--saino-surface-muted);
-}
-
-.saino-chat-item.active {
-  background: var(--saino-primary-soft);
-}
+.saino-chat-item:hover { background: var(--saino-surface-muted); }
+.saino-chat-item.active { background: var(--saino-primary-soft); }
 
 .saino-avatar {
   position: relative;
@@ -337,10 +275,7 @@ img {
   background: var(--saino-success);
 }
 
-.saino-chat-info {
-  min-width: 0;
-  flex: 1;
-}
+.saino-chat-info { min-width: 0; flex: 1; }
 
 .saino-chat-topline,
 .saino-chat-bottomline {
@@ -416,9 +351,7 @@ img {
   gap: 11px;
 }
 
-.saino-contact-info {
-  min-width: 0;
-}
+.saino-contact-info { min-width: 0; }
 
 .saino-contact-name {
   overflow: hidden;
@@ -439,7 +372,7 @@ img {
   gap: 4px;
 }
 
-/* MESSAGE AREA */
+/* MESSAGES */
 
 .saino-messages {
   display: flex;
@@ -456,23 +389,14 @@ img {
   margin: 8px 0;
   padding: 5px 13px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255,255,255,.85);
   color: var(--saino-text-muted);
   font-size: 11px;
 }
 
-.saino-message-row {
-  display: flex;
-  width: 100%;
-}
-
-.saino-message-row.outgoing {
-  justify-content: flex-end;
-}
-
-.saino-message-row.incoming {
-  justify-content: flex-start;
-}
+.saino-message-row { display: flex; width: 100%; }
+.saino-message-row.outgoing { justify-content: flex-end; }
+.saino-message-row.incoming { justify-content: flex-start; }
 
 .saino-message {
   position: relative;
@@ -480,7 +404,7 @@ img {
   padding: 9px 12px 7px;
   border-radius: 12px;
   background: var(--saino-message-in);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 1px rgba(0,0,0,.05);
   overflow-wrap: anywhere;
 }
 
@@ -489,9 +413,7 @@ img {
   background: var(--saino-message-out);
 }
 
-.saino-message-row.incoming .saino-message {
-  border-top-left-radius: 3px;
-}
+.saino-message-row.incoming .saino-message { border-top-left-radius: 3px; }
 
 .saino-message-text {
   white-space: pre-wrap;
@@ -508,70 +430,51 @@ img {
   font-size: 10px;
 }
 
-.saino-message-status {
-  color: var(--saino-primary);
-  font-weight: 700;
-}
+.saino-message-status { color: var(--saino-primary); font-weight: 700; }
 
 /* COMPOSER */
 
 .saino-composer {
   display: flex;
   min-height: 70px;
-  align-items: flex-end;
-  gap: 9px;
-  padding: 11px 16px;
-  background: var(--saino-bg);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--saino-border);
+  background: var(--saino-surface);
 }
 
-.saino-composer-field {
-  display: flex;
-  min-height: 46px;
+.saino-composer input,
+.saino-composer textarea {
+  min-width: 0;
+  min-height: 44px;
   flex: 1;
-  align-items: center;
-  padding: 0 14px;
+  padding: 10px 15px;
   border: 1px solid var(--saino-border);
   border-radius: 24px;
-  background: white;
-}
-
-.saino-composer-field textarea {
-  width: 100%;
-  max-height: 120px;
-  min-height: 24px;
-  resize: none;
-  border: 0;
-  background: transparent;
+  background: var(--saino-surface-muted);
   color: var(--saino-text);
-  line-height: 1.5;
 }
 
-.saino-composer-field textarea:focus {
-  outline: none;
-}
+.saino-composer button { flex: 0 0 auto; }
 
-.saino-send-button {
-  display: grid;
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: var(--saino-primary);
-  color: white;
-}
+/* WELCOME AND EMPTY STATES */
 
-.saino-send-button:hover {
-  background: var(--saino-primary-dark);
+.saino-welcome {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: var(--saino-surface-muted);
+  text-align: center;
 }
-
-/* EMPTY STATES */
 
 .saino-empty-state {
   display: flex;
-  min-height: 240px;
-  flex: 1;
+  min-height: 220px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -582,117 +485,96 @@ img {
 
 .saino-empty-icon {
   display: grid;
-  width: 76px;
-  height: 76px;
-  margin-bottom: 16px;
+  width: 58px;
+  height: 58px;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 20px;
   background: var(--saino-primary-soft);
   color: var(--saino-primary);
-  font-size: 30px;
+  font-size: 25px;
+  font-weight: 800;
 }
 
-.saino-empty-state h2 {
-  margin: 0 0 7px;
-  color: var(--saino-text);
-  font-size: 19px;
-}
-
-.saino-empty-state p {
-  max-width: 340px;
-  margin: 0;
-  font-size: 13px;
-}
-
-/* AUTHENTICATION */
+/* AUTH */
 
 .saino-auth-page {
   display: grid;
+  width: 100%;
   min-height: 100dvh;
-  padding: 20px;
   place-items: center;
+  padding: 24px;
   background: var(--saino-bg);
 }
 
 .saino-auth-card {
-  width: min(100%, 420px);
+  width: min(100%, 430px);
   padding: 30px;
   border: 1px solid var(--saino-border);
-  border-radius: var(--saino-radius-lg);
-  background: white;
+  border-radius: 22px;
+  background: var(--saino-surface);
   box-shadow: var(--saino-shadow);
 }
 
-.saino-auth-card h1 {
-  margin: 0 0 8px;
-  font-size: 25px;
-}
-
-.saino-auth-card p {
-  color: var(--saino-text-muted);
-}
+.saino-auth-card h1 { margin: 0 0 10px; }
+.saino-auth-card p { color: var(--saino-text-muted); }
 
 .saino-form-group {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  margin: 16px 0;
-}
-
-.saino-form-group label {
-  font-size: 13px;
-  font-weight: 650;
+  margin: 17px 0;
 }
 
 .saino-form-group input {
   width: 100%;
-  height: 46px;
-  padding: 0 13px;
+  min-height: 46px;
+  padding: 10px 13px;
   border: 1px solid var(--saino-border);
   border-radius: 10px;
-  background: white;
+  background: var(--saino-surface-muted);
+  color: var(--saino-text);
 }
 
-.saino-form-group input:focus {
-  border-color: var(--saino-primary);
+.saino-auth-card form .saino-button { width: 100%; }
+
+.saino-auth-status {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--saino-surface-muted);
 }
 
-.saino-auth-card .saino-button {
-  width: 100%;
-}
+.saino-auth-status[data-type="error"] { color: var(--saino-danger); }
 
-/* TOAST */
+/* PROFILE / FEED / FRIENDS OVERLAYS */
+
+.saino-profile-overlay,
+.saino-settings-overlay,
+.saino-friends-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+}
 
 .saino-toast-container {
   position: fixed;
-  z-index: 10000;
-  right: 18px;
-  bottom: 18px;
+  z-index: 300;
+  right: 16px;
+  bottom: 16px;
   display: flex;
-  width: min(360px, calc(100vw - 36px));
+  max-width: min(420px, calc(100vw - 32px));
   flex-direction: column;
   gap: 8px;
-  pointer-events: none;
 }
 
 .saino-toast {
   padding: 12px 16px;
-  border: 1px solid var(--saino-border);
   border-radius: 12px;
-  background: white;
+  background: #172b27;
+  color: white;
   box-shadow: var(--saino-shadow);
-  color: var(--saino-text);
-  font-size: 13px;
-  pointer-events: auto;
 }
 
-.saino-toast.success {
-  border-left: 4px solid var(--saino-success);
-}
-
-.saino-toast.error {
-  border-left: 4px solid var(--saino-danger);
-}
+.saino-toast.error { border-left: 4px solid var(--saino-danger); }
 
 /* SCROLLBARS */
 
@@ -703,9 +585,7 @@ img {
 }
 
 .saino-chat-list::-webkit-scrollbar,
-.saino-messages::-webkit-scrollbar {
-  width: 6px;
-}
+.saino-messages::-webkit-scrollbar { width: 6px; }
 
 .saino-chat-list::-webkit-scrollbar-thumb,
 .saino-messages::-webkit-scrollbar-thumb {
@@ -716,65 +596,343 @@ img {
 /* TABLET */
 
 @media (max-width: 900px) {
-  :root {
-    --saino-sidebar-width: 320px;
-  }
-
-  .saino-message {
-    max-width: 85%;
-  }
+  :root { --saino-sidebar-width: 320px; }
+  .saino-message { max-width: 85%; }
 }
 
-/* MOBILE */
+/* MOBILE — WHATSAPP-STYLE HOME */
 
 @media (max-width: 640px) {
+  :root {
+    color-scheme: dark;
+    --saino-primary: #20c875;
+    --saino-primary-dark: #16a765;
+    --saino-primary-soft: rgba(32,200,117,.15);
+    --saino-bg: #0b141a;
+    --saino-surface: #0b141a;
+    --saino-surface-muted: #202c33;
+    --saino-text: #e9edef;
+    --saino-text-muted: #8696a0;
+    --saino-border: rgba(134,150,160,.14);
+    --saino-message-out: #005c4b;
+    --saino-message-in: #202c33;
+    --saino-header-height: 66px;
+  }
+
+  html, body, #saino-app {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    background: #0b141a;
+  }
+
+  body {
+    color: #e9edef;
+    overscroll-behavior: none;
+  }
+
   .saino-app {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100dvh;
     min-height: 100dvh;
+    overflow: hidden;
+    background: #0b141a;
   }
 
   .saino-sidebar {
+    position: relative;
+    display: flex;
     width: 100%;
     min-width: 0;
-    border-right: 0;
+    height: 100%;
+    flex-direction: column;
+    border: 0;
+    background: #0b141a;
   }
 
-  .saino-conversation {
-    display: none;
-    width: 100%;
+  .saino-sidebar-header {
+    order: 0;
+    height: 68px;
+    min-height: 68px;
+    padding: 0 18px;
+    border: 0;
+    background: #0b141a;
   }
 
-  .saino-app.chat-open .saino-sidebar {
-    display: none;
+  .saino-brand {
+    gap: 11px;
+    color: #20c875;
+    font-size: 25px;
+    font-weight: 750;
+    letter-spacing: -.8px;
   }
 
-  .saino-app.chat-open .saino-conversation {
+  .saino-brand-mark {
+    width: 39px;
+    height: 39px;
+    border-radius: 13px;
+    background: #20c875;
+    color: #062b1b;
+    font-size: 21px;
+  }
+
+  .saino-header-actions .saino-icon-button {
+    width: 40px;
+    height: 40px;
+    color: #aebac1;
+    font-size: 14px;
+  }
+
+  .saino-search {
+    order: 1;
+    padding: 9px 16px 13px;
+    background: #0b141a;
+  }
+
+  .saino-search input {
+    height: 48px;
+    padding: 0 17px 0 44px;
+    border: 0;
+    border-radius: 28px;
+    background: #202c33;
+    color: #e9edef;
+    font-size: 15px;
+  }
+
+  .saino-search input::placeholder { color: #8696a0; opacity: 1; }
+
+  .saino-search input:focus {
+    border: 0;
+    background: #26343c;
+    box-shadow: 0 0 0 1px rgba(32,200,117,.45);
+  }
+
+  .saino-search-icon {
+    left: 31px;
+    color: #aebac1;
+    font-size: 20px;
+  }
+
+  /* Existing module tabs become the fixed bottom navigation. */
+
+  .saino-tabs {
+    position: relative;
+    z-index: 5;
+    order: 3;
     display: flex;
+    width: 100%;
+    min-height: 76px;
+    flex: 0 0 76px;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0;
+    padding: 7px 5px max(7px, env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(134,150,160,.13);
+    background: #111b21;
   }
+
+  .saino-tabs .saino-tab {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 58px;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 5px 2px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: #aebac1;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .saino-tabs .saino-tab.active {
+    background: rgba(32,200,117,.13);
+    color: #20c875;
+  }
+
+  .saino-tabs .saino-tab.active::before {
+    content: "";
+    display: block;
+    width: 24px;
+    height: 3px;
+    margin-bottom: 1px;
+    border-radius: 4px;
+    background: #20c875;
+  }
+
+  .saino-chat-list {
+    order: 2;
+    display: block;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 2px 0 12px;
+    background: #0b141a;
+    scrollbar-width: none;
+  }
+
+  .saino-chat-list::-webkit-scrollbar { display: none; }
+
+  .saino-chat-item {
+    min-height: 86px;
+    gap: 14px;
+    padding: 10px 17px;
+    border: 0;
+    background: transparent;
+    color: #e9edef;
+  }
+
+  .saino-chat-item:hover,
+  .saino-chat-item.active { background: #172229; }
+
+  .saino-avatar {
+    width: 59px;
+    height: 59px;
+    min-width: 59px;
+    background: #263b35;
+    color: #d9fdd3;
+    font-size: 21px;
+  }
+
+  .saino-chat-info {
+    align-self: center;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-bottom: 1px solid rgba(134,150,160,.10);
+  }
+
+  .saino-chat-topline,
+  .saino-chat-bottomline { gap: 10px; }
+
+  .saino-chat-name {
+    color: #f1f3f4;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .saino-chat-preview {
+    max-width: 100%;
+    margin-top: 4px;
+    color: #aebac1;
+    font-size: 14px;
+  }
+
+  .saino-chat-time {
+    color: #8696a0;
+    font-size: 11px;
+  }
+
+  .saino-unread-count {
+    background: #20c875;
+    color: #062b1b;
+  }
+
+  .saino-sidebar-footer { display: none !important; }
+
+  .saino-empty-state {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: #aebac1;
+    text-align: center;
+  }
+
+  .saino-empty-icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border-radius: 20px;
+    background: #202c33;
+    color: #20c875;
+    font-size: 25px;
+    font-weight: 800;
+  }
+
+  /* Conversation screen */
+
+  .saino-conversation { background: #0b141a; }
 
   .saino-conversation-header {
-    padding: 0 9px;
+    height: 62px;
+    min-height: 62px;
+    border-color: rgba(134,150,160,.13);
+    background: #172229;
   }
 
+  .saino-contact-name { color: #f1f3f4; }
+  .saino-contact-status { color: #aebac1; }
+
   .saino-messages {
-    padding: 16px 10px;
+    background-color: #0b141a;
+    background-image: radial-gradient(rgba(255,255,255,.025) .7px, transparent .7px);
+    background-size: 13px 13px;
+  }
+
+  .saino-date-label {
+    background: #18252c;
+    color: #aebac1;
   }
 
   .saino-message {
-    max-width: 88%;
+    background: #202c33;
+    color: #e9edef;
   }
+
+  .saino-message-row.outgoing .saino-message {
+    background: #005c4b;
+    color: #e9edef;
+  }
+
+  .saino-message-meta { color: #b2c4bd; }
 
   .saino-composer {
     gap: 6px;
     padding: 8px;
+    border-color: rgba(134,150,160,.13);
+    background: #172229;
   }
 
-  .saino-sidebar-header {
-    padding: 0 12px;
+  .saino-composer input,
+  .saino-composer textarea {
+    border-color: transparent;
+    background: #26343c;
+    color: #e9edef;
   }
 
-  .saino-auth-card {
-    padding: 23px;
-  }
+  .saino-message { max-width: 88%; }
+
+  .saino-app.chat-open .saino-tabs,
+  .saino-app.chat-open .saino-sidebar-header,
+  .saino-app.chat-open .saino-search { display: none; }
+
+  .saino-app.chat-open .saino-sidebar { display: none; }
+  .saino-app.chat-open .saino-conversation { display: flex; }
+
+  .saino-conversation-header { padding: 0 9px; }
+  .saino-messages { padding: 16px 10px; }
+  .saino-sidebar-header { padding: 0 12px; }
+  .saino-auth-card { padding: 23px; }
+}
+
+/* TABLET AND DESKTOP */
+
+@media (min-width: 641px) {
+  .saino-app { background: var(--saino-bg); }
 }
 
 /* ACCESSIBILITY */
@@ -784,8 +942,8 @@ img {
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: .01ms !important;
   }
 }
