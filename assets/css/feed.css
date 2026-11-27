@@ -1,5 +1,8 @@
 
-/* Saino Feed UI */
+/* =========================================
+   SAINO FEED — WHATSAPP STYLE
+   UI/UX only
+========================================= */
 
 .saino-feed-panel {
   display: flex;
@@ -8,16 +11,21 @@
   flex: 1;
   flex-direction: column;
   overflow: auto;
-  background: #f4f7f6;
+  background: var(--saino-app-bg, #f4f7f6);
+  color: var(--saino-text);
+  scrollbar-width: thin;
 }
 
+/* Header */
+
 .saino-feed-header {
+  position: relative;
   display: flex;
   min-height: 76px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 16px clamp(16px, 4vw, 42px);
+  gap: 14px;
+  padding: 14px clamp(16px, 4vw, 42px);
   border-bottom: 1px solid var(--saino-border);
   background: var(--saino-surface);
 }
@@ -25,58 +33,104 @@
 .saino-feed-header h1 {
   margin: 0;
   font-size: 22px;
+  font-weight: 750;
+  letter-spacing: -.4px;
 }
 
 .saino-feed-header p {
-  margin: 3px 0 0;
+  margin: 4px 0 0;
   color: var(--saino-text-muted);
-  font-size: 13px;
+  font-size: 12px;
 }
+
+/* Refresh */
+
+.saino-feed-refresh {
+  min-height: 38px;
+  padding: 0 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: transform .18s ease, background .18s ease;
+}
+
+.saino-feed-refresh:active {
+  transform: scale(.96);
+}
+
+/* Composer and posts */
 
 .saino-feed-composer,
 .saino-feed-post {
   width: min(100% - 28px, 720px);
-  margin: 20px auto 0;
+  margin: 18px auto 0;
   padding: 18px;
   border: 1px solid var(--saino-border);
-  border-radius: 16px;
+  border-radius: 17px;
   background: var(--saino-surface);
-  box-shadow: var(--saino-shadow);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .035);
 }
 
 .saino-feed-composer-title {
   display: block;
-  margin-bottom: 10px;
-  font-weight: 700;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 750;
 }
 
 .saino-feed-composer textarea {
   display: block;
   width: 100%;
-  min-height: 84px;
+  min-height: 90px;
   resize: vertical;
-  padding: 12px;
+  padding: 13px 14px;
   border: 1px solid var(--saino-border);
-  border-radius: 10px;
+  border-radius: 13px;
+  outline: none;
   background: var(--saino-surface-muted);
   color: var(--saino-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
+
+.saino-feed-composer textarea:focus {
+  border-color: var(--saino-primary);
+  box-shadow: 0 0 0 3px var(--saino-primary-soft);
+}
+
+.saino-feed-composer textarea::placeholder {
+  color: var(--saino-text-muted);
+}
+
+/* Composer actions */
 
 .saino-feed-composer-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 13px;
 }
 
 .saino-feed-file-label {
   display: inline-flex;
+  min-height: 36px;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--saino-border);
+  border-radius: 20px;
+  background: var(--saino-surface-muted);
   color: var(--saino-primary);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 750;
   cursor: pointer;
+  transition: background .18s ease;
+}
+
+.saino-feed-file-label:hover {
+  background: var(--saino-primary-soft);
 }
 
 .saino-feed-file-label input {
@@ -97,31 +151,44 @@
   white-space: nowrap;
 }
 
+/* Feed list */
+
 .saino-feed-list {
-  padding-bottom: 24px;
+  width: 100%;
+  padding-bottom: 26px;
 }
 
 .saino-feed-post {
   margin-top: 14px;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
+
+.saino-feed-post:hover {
+  border-color: var(--saino-border-strong, var(--saino-border));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .055);
+}
+
+/* Post header */
 
 .saino-feed-post-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
 }
 
 .saino-feed-avatar {
   display: grid;
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   place-items: center;
   overflow: hidden;
+  border: 1px solid var(--saino-border);
   border-radius: 50%;
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 750;
 }
 
 .saino-feed-avatar img {
@@ -135,10 +202,13 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
+  gap: 3px;
 }
 
 .saino-feed-author strong {
   overflow: hidden;
+  font-size: 13px;
+  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -148,62 +218,92 @@
   font-size: 11px;
 }
 
+/* Delete */
+
 .saino-feed-delete {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 9px;
   border: 0;
+  border-radius: 18px;
   background: transparent;
   color: var(--saino-danger);
   font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
+  transition: background .18s ease;
 }
+
+.saino-feed-delete:hover {
+  background: rgba(220, 60, 60, .09);
+}
+
+/* Post content */
 
 .saino-feed-post-text {
   margin: 16px 0;
   overflow-wrap: anywhere;
+  color: var(--saino-text);
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .saino-feed-media-link {
   display: block;
-  margin: 12px -2px 0;
+  margin: 13px -2px 0;
   overflow: hidden;
-  border-radius: 10px;
+  border: 1px solid var(--saino-border);
+  border-radius: 13px;
   background: var(--saino-surface-muted);
 }
 
 .saino-feed-media {
+  display: block;
   width: 100%;
   max-height: 560px;
   object-fit: contain;
 }
 
+/* Footer */
+
 .saino-feed-post-footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
-  padding-top: 10px;
+  margin-top: 13px;
+  padding-top: 12px;
   border-top: 1px solid var(--saino-border);
   color: var(--saino-text-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
+
+/* Empty and loading state */
 
 .saino-feed-state {
   width: min(100% - 28px, 720px);
   margin: 22px auto;
-  padding: 26px;
+  padding: 30px 20px;
   border: 1px dashed var(--saino-border);
-  border-radius: 14px;
+  border-radius: 16px;
+  background: var(--saino-surface);
   color: var(--saino-text-muted);
   text-align: center;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .saino-feed-more-wrap {
   display: flex;
   justify-content: center;
-  padding: 4px 16px 28px;
+  padding: 5px 16px 28px;
 }
+
+/* Feed visibility */
 
 .saino-app.feed-open .saino-feed-panel {
   display: flex;
 }
+
+/* Mobile */
 
 @media (max-width: 640px) {
   .saino-app.feed-open .saino-sidebar {
@@ -213,11 +313,23 @@
   .saino-app.feed-open .saino-feed-panel {
     display: flex;
     width: 100%;
+    min-height: 100%;
   }
 
   .saino-feed-header {
-    min-height: 66px;
-    padding: 12px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    min-height: 62px;
+    padding: 10px 15px;
+  }
+
+  .saino-feed-header h1 {
+    font-size: 19px;
+  }
+
+  .saino-feed-header p {
+    font-size: 11px;
   }
 
   .saino-feed-composer,
@@ -225,6 +337,12 @@
     width: calc(100% - 20px);
     margin-top: 10px;
     padding: 14px;
+    border-radius: 15px;
+  }
+
+  .saino-feed-composer textarea {
+    min-height: 82px;
+    font-size: 13px;
   }
 
   .saino-feed-composer-actions {
@@ -234,5 +352,30 @@
   .saino-feed-file-name {
     flex-basis: 100%;
     order: 3;
+  }
+
+  .saino-feed-avatar {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .saino-feed-post-text {
+    font-size: 13px;
+  }
+
+  .saino-feed-state {
+    width: calc(100% - 20px);
+    margin: 16px auto;
+    padding: 24px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-feed-refresh,
+  .saino-feed-file-label,
+  .saino-feed-post,
+  .saino-feed-delete {
+    transition: none !important;
   }
 }
