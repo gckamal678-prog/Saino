@@ -1,25 +1,68 @@
 
-/* Saino message delivery and read receipt states */
+/* =========================================================
+   SAINO — WHATSAPP STYLE MESSAGE RECEIPTS
+   UI ONLY — Existing status attributes preserved
+   ========================================================= */
 
 .saino-message-status {
   display: inline-block;
   min-width: 18px;
-  margin-left: 2px;
-  color: #7b8b86;
+  margin-left: 3px;
+  color: #8696a0;
   font-size: 12px;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -2px;
   white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  transition: color 160ms ease;
 }
 
-.saino-message-status[data-state="read"] {
-  color: #2596be;
-}
-
-.saino-message-status[data-state="delivered"] {
-  color: #7b8b86;
-}
+/* Sent */
 
 .saino-message-status[data-state="sent"] {
-  color: #7b8b86;
+  color: #8696a0;
+}
+
+/* Delivered */
+
+.saino-message-status[data-state="delivered"] {
+  color: #8696a0;
+}
+
+/* Read */
+
+.saino-message-status[data-state="read"] {
+  color: #53bdeb;
+}
+
+/* Dark theme */
+
+[data-theme="dark"] .saino-message-status,
+.dark .saino-message-status {
+  color: #8696a0;
+}
+
+[data-theme="dark"] .saino-message-status[data-state="read"],
+.dark .saino-message-status[data-state="read"] {
+  color: #53bdeb;
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .saino-message-status {
+    min-width: 17px;
+    margin-left: 2px;
+    font-size: 11px;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-message-status {
+    transition: none;
+  }
 }
