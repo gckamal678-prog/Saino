@@ -1,7 +1,8 @@
 
 /*
- * SAINO — MESSAGE REPLY UI
- * Adds reply controls and quoted-message previews without changing app.js.
+ * SAINO — WHATSAPP STYLE MESSAGE REPLY UI
+ * Swipe right to reply, quote preview and reply composer.
+ * Uses the existing KSKSupabaseMessages.replyMessage API.
  */
 (function (global) {
   "use strict";
@@ -15,6 +16,10 @@
   let refreshTimer = null;
   let requestToken = 0;
   let sending = false;
+  let pointerStart = null;
+
+  const SWIPE_THRESHOLD = 65;
+  const SWIPE_MAX = 105;
 
   const service = () => global.KSKSupabaseMessages;
   const language = () => global.KSKLanguage;
@@ -40,8 +45,9 @@
       return t("This message was deleted", "यो सन्देश मेटाइएको छ");
     }
 
-    const text = String(message.text || "").trim();
-    if (text) return text;
+    const value = String(message.text || "").trim();
+
+    if (value) return value;
 
     if (message.type === "image") return t("Photo", "फोटो");
     if (message.type === "video") return t("Video", "भिडियो");
@@ -53,12 +59,30 @@
     return t("Media message", "मिडिया सन्देश");
   }
 
+  function getMessageAuthor(message) {
+    if (!message) {
+      return t("Message", "सन्देश");
+    }
+
+    if (message.fromMe) {
+      return t("You", "तपाईं");
+    }
+
+    return t("Reply", "जवाफ");
+  }
+
   function clearSelection() {
     selectedMessage = null;
 
     document.querySelector(
       ".saino-reply-composer-preview"
     )?.remove();
+
+    document.querySelectorAll(
+      ".saino-message-row.saino-reply-selected"
+    ).forEach(row => {
+      row.classList.remove("saino-reply-selected");
+    });
   }
 
   function showComposerPreview(message) {
@@ -72,11 +96,15 @@
     const preview = document.createElement("div");
     preview.className = "saino-reply-composer-preview";
 
+    const accent = document.createElement("span");
+    accent.className = "saino-reply-preview-accent";
+
     const copy = document.createElement("div");
     copy.className = "saino-reply-preview-copy";
 
     const heading = document.createElement("strong");
-    heading.textContent = t("Replying to", "जवाफ दिँदै");
+    heading.textContent =
+      `${t("Replying to", "जवाफ दिँदै")} ${getMessageAuthor(message)}`;
 
     const excerpt = document.createElement("span");
     excerpt.textContent = getMessageText(message);
@@ -93,14 +121,23 @@
     close.textContent = "×";
     close.addEventListener("click", clearSelection);
 
-    preview.append(copy, close);
+    preview.append(accent, copy, close);
     form.parentElement.insertBefore(preview, form);
   }
 
   function selectMessage(message) {
     if (!message?.id) return;
 
+    clearSelection();
+
     selectedMessage = message;
+
+    const row = messageHost()?.querySelector(
+      `[data-saino-message-id="${CSS.escape(String(message.id))}"]`
+    );
+
+    row?.classList.add("saino-reply-selected");
+
     showComposerPreview(message);
 
     composer()?.querySelector('[name="message"]')?.focus();
@@ -112,42 +149,76 @@
     button.type = "button";
     button.className = "saino-message-reply-button";
     button.textContent = t("Reply", "जवाफ");
+
     button.setAttribute(
       "aria-label",
       t("Reply to message", "सन्देशको जवाफ दिनुहोस्")
     );
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", event => {
+      event.stopPropagation();
       selectMessage(message);
     });
 
     return button;
   }
 
+  function scrollToOriginal(messageId) {
+    if (!messageId) return;
+
+    const host = messageHost();
+
+    const row = host?.querySelector(
+      `[data-saino-message-id="${CSS.escape(String(messageId))}"]`
+    );
+
+    if (!row) return;
+
+    row.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    row.classList.add("saino-reply-original-highlight");
+
+    global.setTimeout(() => {
+      row.classList.remove("saino-reply-original-highlight");
+    }, 1500);
+  }
+
   function addQuotedPreview(row, message) {
     if (!message.replyToId) return;
 
-    if (row.querySelector(".saino-message-quoted")) return;
-
-    const original = messageMap.get(message.replyToId);
     const article = row.querySelector(".saino-message");
     const text = article?.querySelector(".saino-message-text");
 
     if (!article || !text) return;
 
-    const quote = document.createElement("div");
-    quote.className = "saino-message-quoted";
+    const original = messageMap.get(message.replyToId);
+
+    let quote = article.querySelector(".saino-message-quoted");
+
+    if (!quote) {
+      quote = document.createElement("button");
+      quote.type = "button";
+      quote.className = "saino-message-quoted";
+      quote.setAttribute(
+        "aria-label",
+        t("View original message", "मूल सन्देश हेर्नुहोस्")
+      );
+
+      article.insertBefore(quote, text);
+    }
+
+    /* पुरानो placeholder भए पनि वास्तविक Preview राख्ने */
+    quote.replaceChildren();
 
     const label = document.createElement("strong");
-
     label.textContent = original
-      ? (original.fromMe
-          ? t("You", "तपाईं")
-          : t("Message", "सन्देश"))
+      ? getMessageAuthor(original)
       : t("Replied message", "जवाफ दिइएको सन्देश");
 
     const excerpt = document.createElement("span");
-
     excerpt.textContent = original
       ? getMessageText(original)
       : t(
@@ -156,7 +227,11 @@
         );
 
     quote.append(label, excerpt);
-    article.insertBefore(quote, text);
+
+    quote.onclick = event => {
+      event.stopPropagation();
+      scrollToOriginal(message.replyToId);
+    };
   }
 
   function decorateRows(messages) {
@@ -164,7 +239,7 @@
     if (!host) return;
 
     const rows = Array.from(
-      host.querySelectorAll(".saino-message-row")
+      host.querySelectorAll(":scope > .saino-message-row")
     );
 
     if (rows.length !== messages.length) return;
@@ -174,7 +249,11 @@
 
       if (!message?.id) return;
 
+      row.dataset.messageId = message.id;
       row.dataset.sainoMessageId = message.id;
+
+      /* Horizontal swipe, vertical scrolling कायम */
+      row.style.touchAction = "pan-y";
 
       addQuotedPreview(row, message);
 
@@ -207,7 +286,7 @@
     ) return;
 
     messageMap = new Map(
-      result.data.map(message => [message.id, message])
+      result.data.map(message => [String(message.id), message])
     );
 
     decorateRows(result.data);
@@ -224,25 +303,137 @@
       refreshMessages().catch(error => {
         console.warn("Saino reply UI:", error);
       });
-    }, 160);
+    }, 180);
   }
 
-  function observeApp() {
-    if (observer) observer.disconnect();
+  /* -------------------------
+     SWIPE TO REPLY
+     ------------------------- */
 
-    const root = document.getElementById("saino-app");
-
-    if (!root || typeof MutationObserver === "undefined") return;
-
-    observer = new MutationObserver(() => {
-      scheduleRefresh();
-    });
-
-    observer.observe(root, {
-      childList: true,
-      subtree: true
-    });
+  function isInteractiveTarget(target) {
+    return Boolean(target.closest(
+      "button,a,input,textarea,video,audio,select"
+    ));
   }
+
+  function handlePointerDown(event) {
+    const row = event.target.closest(".saino-message-row");
+
+    if (!row || !messageHost()?.contains(row)) return;
+    if (isInteractiveTarget(event.target)) return;
+
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    pointerStart = {
+      row,
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+      swiping: false
+    };
+  }
+
+  function handlePointerMove(event) {
+    if (!pointerStart) return;
+
+    if (event.pointerId !== pointerStart.pointerId) return;
+
+    const dx = event.clientX - pointerStart.x;
+    const dy = event.clientY - pointerStart.y;
+
+    /* Vertical scroll लाई प्राथमिकता */
+    if (
+      !pointerStart.swiping &&
+      Math.abs(dy) > Math.abs(dx)
+    ) {
+      pointerStart = null;
+      return;
+    }
+
+    if (dx <= 0) return;
+
+    if (dx > 12) {
+      pointerStart.swiping = true;
+      pointerStart.row.classList.add("saino-reply-swiping");
+    }
+
+    if (pointerStart.swiping) {
+      const distance = Math.min(dx, SWIPE_MAX);
+
+      pointerStart.row.style.transform =
+        `translateX(${distance * 0.35}px)`;
+
+      pointerStart.row.style.transition = "none";
+    }
+  }
+
+  function resetSwipe(row) {
+    if (!row) return;
+
+    row.style.transform = "";
+    row.style.transition = "";
+
+    row.classList.remove("saino-reply-swiping");
+  }
+
+  function handlePointerUp(event) {
+    if (!pointerStart) return;
+
+    if (event.pointerId !== pointerStart.pointerId) return;
+
+    const state = pointerStart;
+    pointerStart = null;
+
+    const dx = event.clientX - state.x;
+    const dy = event.clientY - state.y;
+
+    resetSwipe(state.row);
+
+    if (
+      state.swiping &&
+      dx >= SWIPE_THRESHOLD &&
+      dx > Math.abs(dy)
+    ) {
+      const id =
+        state.row.dataset.sainoMessageId ||
+        state.row.dataset.messageId;
+
+      const message = messageMap.get(String(id));
+
+      if (message) {
+        event.preventDefault();
+        selectMessage(message);
+      }
+    }
+  }
+
+  function handlePointerCancel() {
+    if (!pointerStart) return;
+
+    resetSwipe(pointerStart.row);
+    pointerStart = null;
+  }
+
+  function bindSwipe() {
+    const host = messageHost();
+    if (!host || host.dataset.sainoReplySwipeBound) return;
+
+    host.dataset.sainoReplySwipeBound = "true";
+
+    host.addEventListener("pointerdown", handlePointerDown);
+    host.addEventListener("pointermove", handlePointerMove, {
+      passive: true
+    });
+    host.addEventListener("pointerup", handlePointerUp);
+    host.addEventListener("pointercancel", handlePointerCancel);
+    host.addEventListener("lostpointercapture", handlePointerCancel);
+  }
+
+  /* -------------------------
+     SEND REPLY
+     ------------------------- */
 
   async function handleMessageSubmit(event) {
     const form = event.target.closest(
@@ -299,6 +490,8 @@
         }
       }));
 
+      scheduleRefresh();
+
     } catch (error) {
       const preview = document.querySelector(
         ".saino-reply-composer-preview"
@@ -330,12 +523,34 @@
     messageMap.clear();
     requestToken++;
 
+    pointerStart = null;
+
     document.querySelector(
       ".saino-reply-composer-preview"
     )?.remove();
 
     observeApp();
     scheduleRefresh();
+
+    global.setTimeout(bindSwipe, 100);
+  }
+
+  function observeApp() {
+    if (observer) observer.disconnect();
+
+    const root = document.getElementById("saino-app");
+
+    if (!root || typeof MutationObserver === "undefined") return;
+
+    observer = new MutationObserver(() => {
+      bindSwipe();
+      scheduleRefresh();
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true
+    });
   }
 
   function start() {
@@ -350,6 +565,7 @@
         selectedMessage = null;
         messageMap.clear();
         requestToken++;
+        pointerStart = null;
 
         if (observer) observer.disconnect();
       }
@@ -376,13 +592,20 @@
       handleMessageSubmit,
       true
     );
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && selectedMessage) {
+        clearSelection();
+      }
+    });
   }
 
   start();
 
   global.SainoMessageReplyUI = Object.freeze({
     refresh: scheduleRefresh,
-    cancel: clearSelection
+    cancel: clearSelection,
+    replyTo: selectMessage
   });
 
 })(window);
