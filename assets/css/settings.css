@@ -1,5 +1,8 @@
 
-/* Saino Settings UI */
+/* =========================================
+   SAINO SETTINGS — WHATSAPP STYLE UI
+   UI/UX only — no functionality changes
+========================================= */
 
 .saino-settings-overlay {
   position: fixed;
@@ -9,7 +12,9 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(10, 25, 21, .56);
+  background: rgba(8, 20, 17, .62);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .saino-settings-overlay[hidden] {
@@ -19,43 +24,60 @@
 .saino-settings-dialog {
   display: flex;
   flex-direction: column;
-  width: min(620px, 100%);
-  max-height: min(820px, calc(100dvh - 32px));
+  width: min(640px, 100%);
+  max-height: min(850px, calc(100dvh - 32px));
   overflow: hidden;
   border: 1px solid var(--saino-border);
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--saino-surface);
   color: var(--saino-text);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, .24);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .28);
+  animation: saino-settings-enter .2s ease-out;
 }
+
+@keyframes saino-settings-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
 
 .saino-settings-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 20px 22px 16px;
+  padding: 21px 24px 17px;
   border-bottom: 1px solid var(--saino-border);
 }
 
 .saino-settings-eyebrow {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   color: var(--saino-primary);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 2px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
 }
 
 .saino-settings-header h2 {
   margin: 0;
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 750;
+  letter-spacing: -.45px;
 }
 
 .saino-settings-close {
   display: grid;
-  width: 38px;
-  height: 38px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
   place-items: center;
   border: 0;
   border-radius: 50%;
@@ -63,28 +85,49 @@
   color: var(--saino-text);
   font-size: 25px;
   cursor: pointer;
+  transition: background .18s ease, transform .18s ease;
 }
+
+.saino-settings-close:hover {
+  background: var(--saino-primary-soft);
+  transform: rotate(90deg);
+}
+
+.saino-settings-close:active {
+  transform: scale(.92);
+}
+
+/* Tabs */
 
 .saino-settings-tabs {
   display: flex;
   gap: 7px;
-  padding: 12px 16px;
+  padding: 13px 17px;
   overflow-x: auto;
   border-bottom: 1px solid var(--saino-border);
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .saino-settings-tabs button {
+  position: relative;
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 38px;
+  padding: 0 16px;
   border: 1px solid transparent;
-  border-radius: 20px;
+  border-radius: 22px;
   background: transparent;
   color: var(--saino-text-muted);
   font-size: 13px;
   font-weight: 650;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.saino-settings-tabs button:hover {
+  background: var(--saino-surface-muted);
+  color: var(--saino-text);
 }
 
 .saino-settings-tabs button.active {
@@ -93,15 +136,19 @@
   color: var(--saino-primary-dark);
 }
 
+/* Content */
+
 .saino-settings-content {
   min-height: 220px;
-  padding: 20px 22px 26px;
+  padding: 22px 24px 28px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--saino-border) transparent;
 }
 
 .saino-settings-section {
-  margin-bottom: 24px;
+  margin-bottom: 27px;
 }
 
 .saino-settings-section:last-child {
@@ -109,39 +156,53 @@
 }
 
 .saino-settings-section h3 {
-  margin: 0 0 12px;
+  margin: 0 0 13px;
   font-size: 16px;
   font-weight: 750;
+  letter-spacing: -.2px;
 }
 
 .saino-settings-description {
-  margin: 0 0 15px;
+  margin: 0 0 16px;
   color: var(--saino-text-muted);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
+
+/* Settings rows */
 
 .saino-settings-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 15px;
+  padding: 16px;
   border: 1px solid var(--saino-border);
-  border-radius: 13px;
+  border-radius: 15px;
   background: var(--saino-surface-muted);
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.saino-settings-row + .saino-settings-row {
+  margin-top: 9px;
+}
+
+.saino-settings-row:hover {
+  border-color: var(--saino-primary);
 }
 
 .saino-settings-row strong {
   display: block;
   font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .saino-settings-row p {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   color: var(--saino-text-muted);
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .saino-settings-readonly {
@@ -150,51 +211,76 @@
   font-size: 11px;
 }
 
+/* Select fields */
+
 .saino-settings-field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   font-size: 13px;
   font-weight: 650;
 }
 
 .saino-settings-field select {
   width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
+  min-height: 46px;
+  padding: 0 14px;
   border: 1px solid var(--saino-border);
-  border-radius: 10px;
+  border-radius: 12px;
+  outline: none;
   background: var(--saino-surface);
   color: var(--saino-text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
+
+.saino-settings-field select:focus {
+  border-color: var(--saino-primary);
+  box-shadow: 0 0 0 3px var(--saino-primary-soft);
+}
+
+/* Hint and notice */
 
 .saino-settings-hint {
   margin: 10px 0 0;
   color: var(--saino-text-muted);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .saino-settings-notice {
-  padding: 13px 14px;
+  padding: 14px 15px;
   border: 1px solid var(--saino-border);
-  border-radius: 12px;
+  border-radius: 13px;
   background: var(--saino-surface-muted);
   color: var(--saino-text-muted);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
+/* Primary button */
+
 .saino-settings-primary {
-  min-height: 39px;
-  padding: 0 15px;
+  min-height: 42px;
+  padding: 0 18px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 11px;
   background: var(--saino-primary);
   color: #fff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 750;
   cursor: pointer;
+  transition: filter .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.saino-settings-primary:hover:not(:disabled) {
+  filter: brightness(.96);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+}
+
+.saino-settings-primary:active:not(:disabled) {
+  transform: scale(.97);
 }
 
 .saino-settings-primary:disabled {
@@ -202,11 +288,13 @@
   cursor: not-allowed;
 }
 
+/* Toggle switch */
+
 .saino-settings-switch {
   position: relative;
-  flex: 0 0 46px;
-  width: 46px;
-  height: 27px;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 28px;
   cursor: pointer;
 }
 
@@ -222,20 +310,20 @@
   inset: 0;
   border-radius: 20px;
   background: #b8c2be;
-  transition: background .18s ease;
+  transition: background .2s ease;
 }
 
 .saino-settings-switch span::after {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 21px;
-  height: 21px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: #fff;
   content: "";
   box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
-  transition: transform .18s ease;
+  transition: transform .2s ease;
 }
 
 .saino-settings-switch input:checked + span {
@@ -243,59 +331,121 @@
 }
 
 .saino-settings-switch input:checked + span::after {
-  transform: translateX(19px);
+  transform: translateX(20px);
 }
 
 .saino-settings-switch input:focus-visible + span {
   outline: 3px solid var(--saino-primary-soft);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
+
+/* Loading and error */
 
 .saino-settings-loading,
 .saino-settings-error {
-  padding: 28px 12px;
+  padding: 32px 14px;
   color: var(--saino-text-muted);
   text-align: center;
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .saino-settings-error {
   color: var(--saino-danger);
 }
 
+/* Body state */
+
 body.saino-settings-open {
   overflow: hidden;
 }
+
+/* Tablet and mobile */
 
 @media (max-width: 600px) {
   .saino-settings-overlay {
     align-items: stretch;
     padding: 0;
+    background: var(--saino-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .saino-settings-dialog {
     width: 100%;
+    height: 100%;
     max-height: 100dvh;
-    height: 100dvh;
     border: 0;
     border-radius: 0;
+    box-shadow: none;
+    animation: none;
   }
 
   .saino-settings-header {
     padding: 17px 18px 14px;
   }
 
+  .saino-settings-header h2 {
+    font-size: 20px;
+  }
+
+  .saino-settings-tabs {
+    gap: 5px;
+    padding: 11px 14px;
+  }
+
+  .saino-settings-tabs button {
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
   .saino-settings-content {
-    padding: 18px 16px 28px;
+    flex: 1;
+    min-height: 0;
+    padding: 19px 16px 30px;
+  }
+
+  .saino-settings-section {
+    margin-bottom: 23px;
   }
 
   .saino-settings-row {
-    gap: 10px;
-    padding: 13px;
+    gap: 11px;
+    padding: 14px;
+    border-radius: 13px;
+  }
+
+  .saino-settings-row strong {
+    font-size: 13px;
+  }
+
+  .saino-settings-row p {
+    font-size: 11.5px;
+  }
+
+  .saino-settings-close {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
 }
-/* Keep the settings modal hidden until it is opened. */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-settings-dialog,
+  .saino-settings-close,
+  .saino-settings-tabs button,
+  .saino-settings-row,
+  .saino-settings-primary,
+  .saino-settings-switch span,
+  .saino-settings-switch span::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Keep settings hidden until opened */
+
 .saino-settings-overlay[hidden] {
   display: none !important;
 }
-
