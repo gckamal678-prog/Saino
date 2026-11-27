@@ -1,62 +1,74 @@
 
-/* Saino Groups — WhatsApp-inspired mobile layout */
+/* Saino Groups — mobile-first WhatsApp-inspired workspace */
 
-.saino-groups-page {
-  position: relative;
+.saino-groups-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  min-height: 420px;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
   background: #fff;
   color: #172b27;
-  overflow: hidden;
+  font-family: inherit;
 }
 
 .saino-groups-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 14px;
-  padding: 18px 20px;
+  min-height: 66px;
+  padding: 10px 16px;
   background: #075e54;
   color: #fff;
 }
 
-.saino-groups-header-back,
-.saino-group-back {
+.saino-groups-header > button {
+  width: 38px;
+  height: 38px;
   border: 0;
+  border-radius: 50%;
   background: transparent;
   color: inherit;
   font-size: 25px;
   cursor: pointer;
 }
 
-.saino-groups-header h1,
-.saino-group-subheader h2 {
+.saino-groups-header h1 {
   margin: 0;
   font-size: 19px;
   font-weight: 700;
 }
 
-.saino-groups-header p,
-.saino-group-subheader p {
+.saino-groups-header p {
   margin: 3px 0 0;
   font-size: 12px;
-  opacity: .8;
+  opacity: .82;
 }
 
 .saino-groups-header-icon {
   margin-left: auto;
-  font-size: 27px;
+  font-size: 26px;
 }
 
 .saino-groups-content {
-  padding: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 15px 16px 28px;
 }
 
 .saino-groups-toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  margin-bottom: 16px;
+  margin: 2px 0 16px;
 }
 
 .saino-groups-toolbar h2 {
@@ -75,7 +87,7 @@
 .saino-group-create-footer button {
   border: 0;
   border-radius: 24px;
-  padding: 11px 16px;
+  padding: 11px 15px;
   background: #075e54;
   color: #fff;
   font-weight: 650;
@@ -86,16 +98,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 46px;
+  min-height: 45px;
+  margin-bottom: 10px;
   padding: 0 14px;
   border-radius: 24px;
   background: #f0f4f2;
   color: #71817c;
-  margin-bottom: 12px;
 }
 
 .saino-group-search input {
   width: 100%;
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
@@ -140,7 +153,7 @@
 .saino-group-avatar {
   width: 52px;
   height: 52px;
-  font-size: 22px;
+  font-size: 21px;
 }
 
 .saino-group-avatar img,
@@ -152,8 +165,8 @@
 }
 
 .saino-group-row-main {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .saino-group-row-top,
@@ -193,8 +206,8 @@
 .saino-group-empty,
 .saino-group-state {
   padding: 34px 14px;
-  text-align: center;
   color: #71817c;
+  text-align: center;
 }
 
 .saino-group-empty-icon {
@@ -207,8 +220,8 @@
 }
 
 .saino-group-empty p {
-  margin: 0 auto 18px;
   max-width: 280px;
+  margin: 0 auto 18px;
   font-size: 13px;
 }
 
@@ -216,24 +229,45 @@
   display: flex;
   align-items: center;
   gap: 13px;
-  margin: -16px -16px 18px;
-  padding: 16px;
+  margin: -15px -16px 18px;
+  padding: 15px 16px;
   background: #075e54;
   color: #fff;
+}
+
+.saino-group-back {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.saino-group-subheader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.saino-group-subheader p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  opacity: .82;
 }
 
 .saino-group-name-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   color: #52645e;
   font-size: 13px;
 }
 
 .saino-group-name-field input {
-  width: 100%;
   box-sizing: border-box;
+  width: 100%;
   padding: 13px 14px;
   border: 1px solid #dce5e1;
   border-radius: 12px;
@@ -242,7 +276,7 @@
 }
 
 .saino-group-selection-count {
-  margin-bottom: 12px;
+  margin: 0 0 11px;
   color: #075e54;
   font-size: 13px;
   font-weight: 650;
@@ -270,18 +304,32 @@
   font-size: 14px;
 }
 
+.saino-group-person-name small {
+  display: block;
+  margin-top: 3px;
+  color: #82908b;
+  font-size: 11px;
+}
+
 .saino-group-friend input {
   width: 19px;
   height: 19px;
   accent-color: #075e54;
 }
 
+.saino-group-check {
+  color: #075e54;
+  font-weight: 700;
+}
+
 .saino-group-create-footer {
   position: sticky;
-  bottom: 0;
+  bottom: -28px;
   display: flex;
   justify-content: flex-end;
-  padding: 15px 0 5px;
+  margin: 12px -16px -28px;
+  padding: 13px 16px max(13px, env(safe-area-inset-bottom));
+  border-top: 1px solid #edf0ee;
   background: #fff;
 }
 
@@ -290,7 +338,8 @@
 }
 
 .saino-group-notice {
-  margin: 12px 16px 0;
+  flex: 0 0 auto;
+  margin: 10px 16px 0;
   padding: 10px 12px;
   border-radius: 9px;
   background: #eef4f1;
@@ -310,15 +359,15 @@
 
 .saino-group-about {
   padding: 20px 10px;
-  text-align: center;
   border-bottom: 1px solid #edf0ee;
+  text-align: center;
 }
 
 .saino-group-about-avatar {
   width: 76px;
   height: 76px;
   margin: 0 auto 10px;
-  font-size: 32px;
+  font-size: 31px;
 }
 
 .saino-group-about h3 {
@@ -340,6 +389,14 @@
   font-size: 13px;
 }
 
+.saino-group-members-heading button {
+  border: 0;
+  background: transparent;
+  color: #087e70;
+  font-weight: 650;
+  cursor: pointer;
+}
+
 .saino-group-member {
   display: flex;
   align-items: center;
@@ -349,8 +406,38 @@
 }
 
 .saino-group-role {
+  flex: 0 0 auto;
   color: #82908b;
   font-size: 11px;
+}
+
+.saino-group-more {
+  border: 0;
+  background: transparent;
+  color: #52645e;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.saino-member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 8px 0 12px 54px;
+}
+
+.saino-member-actions button {
+  border: 1px solid #dce5e1;
+  border-radius: 18px;
+  padding: 7px 10px;
+  background: #fff;
+  color: #34564b;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.saino-member-actions button:last-child {
+  color: #b8322a;
 }
 
 .saino-group-danger-zone {
@@ -367,17 +454,11 @@
   cursor: pointer;
 }
 
-@media (max-width: 600px) {
-  .saino-groups-content {
-    padding: 13px;
-  }
-
-  .saino-groups-header {
-    padding: 15px;
-  }
-
-  .saino-group-create-button {
-    padding: 10px 12px;
-    font-size: 12px;
+@media (min-width: 700px) {
+  .saino-groups-overlay {
+    width: min(620px, 100%);
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 100vmax rgba(0,0,0,.38);
   }
 }
