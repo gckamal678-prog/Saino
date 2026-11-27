@@ -1,9 +1,14 @@
 
-/* Saino Profile UI */
+/* =========================================================
+   SAINO — WHATSAPP STYLE PROFILE UI
+   UI ONLY — Existing Profile HTML and JS preserved
+   ========================================================= */
 
 .saino-profile-open {
   overflow: hidden;
 }
+
+/* Overlay */
 
 .saino-profile-overlay {
   position: fixed;
@@ -13,9 +18,16 @@
   align-items: center;
   justify-content: center;
   padding: 18px;
-  background: rgba(10, 25, 21, .56);
+  background: rgba(11, 20, 26, 0.58);
+  -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
 }
+
+.saino-profile-overlay[hidden] {
+  display: none !important;
+}
+
+/* Main dialog */
 
 .saino-profile-dialog {
   display: flex;
@@ -25,24 +37,32 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--saino-border);
-  border-radius: 22px;
+  border-radius: 20px;
   background: var(--saino-surface);
-  box-shadow: 0 24px 80px rgba(0,0,0,.22);
+  color: var(--saino-text);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+  animation: saino-profile-enter 0.2s ease-out;
 }
+
+/* Header */
 
 .saino-profile-header {
   display: flex;
+  min-height: 68px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px 22px 14px;
+  padding: 13px 20px;
   border-bottom: 1px solid var(--saino-border);
+  background: var(--saino-surface);
 }
 
 .saino-profile-header h2 {
   margin: 0;
-  font-size: 21px;
-  line-height: 1.25;
+  color: var(--saino-text);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .saino-profile-eyebrow {
@@ -53,95 +73,157 @@
   letter-spacing: 2px;
 }
 
+/* Close button */
+
 .saino-profile-close {
   display: grid;
   width: 40px;
   height: 40px;
+  flex: 0 0 40px;
   place-items: center;
   border: 0;
   border-radius: 50%;
   background: var(--saino-surface-muted);
   color: var(--saino-text);
-  font-size: 27px;
+  font-size: 26px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
 }
+
+.saino-profile-close:hover {
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-profile-close:active {
+  transform: scale(0.92);
+}
+
+/* Tabs */
 
 .saino-profile-tabs {
   display: flex;
+  flex: 0 0 auto;
   gap: 7px;
   overflow-x: auto;
-  padding: 12px 20px;
+  padding: 11px 18px;
   border-bottom: 1px solid var(--saino-border);
+  background: var(--saino-surface);
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.saino-profile-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .saino-profile-tabs button {
-  flex: 0 0 auto;
+  display: inline-flex;
   min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   padding: 0 15px;
   border: 0;
   border-radius: 20px;
   background: var(--saino-surface-muted);
   color: var(--saino-text-muted);
-  font-size: 13px;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 650;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.saino-profile-tabs button.active {
+.saino-profile-tabs button:hover {
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
 }
 
+.saino-profile-tabs button.active {
+  background: var(--saino-primary);
+  color: #fff;
+}
+
+/* Scrollable content */
+
 .saino-profile-content {
+  min-height: 0;
+  flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px 22px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--saino-border) transparent;
 }
 
 .saino-profile-loading,
 .saino-profile-empty {
-  padding: 28px 12px;
+  padding: 32px 12px;
   color: var(--saino-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
   text-align: center;
 }
 
 .saino-profile-error {
-  padding: 18px;
+  padding: 15px;
+  border: 1px solid rgba(217, 48, 37, 0.16);
   border-radius: 12px;
-  background: #fff0f0;
-  color: #a52d2d;
+  background: rgba(217, 48, 37, 0.08);
+  color: #d93025;
+  font-size: 13px;
+  line-height: 1.5;
 }
+
+/* Profile cover */
 
 .saino-profile-hero {
   position: relative;
   height: 190px;
-  margin-bottom: 66px;
-  border-radius: 16px;
-  background: linear-gradient(135deg,#dcefe9,#a8d8c8);
+  margin-bottom: 67px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #dcefe9, #a8d8c8);
 }
 
 .saino-profile-cover {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border-radius: 16px;
-  background: linear-gradient(135deg,#dcefe9,#a8d8c8);
+  border-radius: inherit;
+  background: linear-gradient(135deg, #dcefe9, #a8d8c8);
 }
 
 .saino-profile-cover img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
+/* Cover change */
+
 .saino-profile-cover-change {
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 8px 12px;
-  border-radius: 18px;
-  background: rgba(20,35,30,.72);
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  background: rgba(11, 20, 26, 0.72);
   color: #fff;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.saino-profile-cover-change:hover {
+  background: rgba(11, 20, 26, 0.9);
 }
 
 .saino-profile-cover-change input,
@@ -149,24 +231,29 @@
   display: none;
 }
 
+/* Avatar */
+
 .saino-profile-avatar-wrap {
   position: absolute;
-  bottom: -54px;
+  bottom: -55px;
   left: 22px;
   width: 112px;
   height: 112px;
 }
 
 .saino-profile-avatar {
+  display: block;
   width: 112px;
   height: 112px;
   overflow: hidden;
   border: 5px solid var(--saino-surface);
   border-radius: 50%;
   background: var(--saino-primary-soft);
+  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.12);
 }
 
 .saino-profile-avatar img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -174,42 +261,61 @@
 
 .saino-profile-placeholder {
   display: grid;
+  width: 100%;
+  height: 100%;
   place-items: center;
   color: var(--saino-primary-dark);
   font-size: 34px;
   font-weight: 750;
 }
 
+/* Avatar change button */
+
 .saino-profile-avatar-change {
   position: absolute;
   right: 0;
   bottom: 2px;
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 35px;
+  height: 35px;
   place-items: center;
   border: 3px solid var(--saino-surface);
   border-radius: 50%;
   background: var(--saino-primary);
   color: #fff;
-  font-size: 20px;
+  font-size: 19px;
   cursor: pointer;
+  transition: transform 0.18s ease;
 }
 
+.saino-profile-avatar-change:hover {
+  transform: scale(1.08);
+}
+
+/* Identity */
+
 .saino-profile-identity {
-  margin: 0 0 20px 5px;
+  margin: 0 0 22px 5px;
 }
 
 .saino-profile-identity h3 {
   margin: 0;
+  color: var(--saino-text);
   font-size: 21px;
+  font-weight: 750;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .saino-profile-identity p {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   color: var(--saino-text-muted);
   font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
+
+/* Forms */
 
 .saino-profile-form {
   display: flex;
@@ -221,9 +327,9 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   color: var(--saino-text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
 }
 
@@ -231,32 +337,54 @@
 .saino-profile-form textarea,
 .saino-profile-form select {
   width: 100%;
-  min-height: 43px;
-  padding: 10px 12px;
+  min-height: 44px;
+  padding: 10px 13px;
   border: 1px solid var(--saino-border);
   border-radius: 10px;
-  background: var(--saino-surface);
+  outline: none;
+  background: var(--saino-surface-muted);
   color: var(--saino-text);
-  font-size: 14px;
+  font-family: inherit;
+  font-size: 13px;
   font-weight: 400;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.saino-profile-form input:not([type="checkbox"]):focus,
+.saino-profile-form textarea:focus,
+.saino-profile-form select:focus {
+  border-color: var(--saino-primary);
+  background: var(--saino-surface);
+  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.1);
+}
+
+.saino-profile-form input::placeholder,
+.saino-profile-form textarea::placeholder {
+  color: var(--saino-text-muted);
 }
 
 .saino-profile-form textarea {
-  min-height: 78px;
+  min-height: 90px;
   resize: vertical;
+  line-height: 1.55;
 }
 
 .saino-profile-form small {
   color: var(--saino-text-muted);
   font-size: 11px;
   font-weight: 400;
+  line-height: 1.5;
 }
+
+/* Two-column fields */
 
 .saino-profile-field-grid {
   display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
 }
+
+/* Checkbox */
 
 .saino-profile-check {
   display: flex !important;
@@ -264,34 +392,48 @@
   align-items: center;
   gap: 10px !important;
   font-weight: 500 !important;
+  line-height: 1.5;
 }
 
 .saino-profile-check input {
   width: 18px;
   height: 18px;
+  flex: 0 0 18px;
   accent-color: var(--saino-primary);
 }
+
+/* Form action buttons */
 
 .saino-profile-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 9px;
-  padding-top: 3px;
+  padding-top: 4px;
 }
 
 .saino-profile-primary,
 .saino-profile-secondary {
+  display: inline-flex;
   min-height: 42px;
-  padding: 0 17px;
-  border: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
   border-radius: 22px;
-  font-size: 13px;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
 }
 
 .saino-profile-primary {
+  border: 1px solid var(--saino-primary);
   background: var(--saino-primary);
   color: #fff;
+}
+
+.saino-profile-primary:hover {
+  background: var(--saino-primary-dark);
 }
 
 .saino-profile-secondary {
@@ -300,28 +442,51 @@
   color: var(--saino-text);
 }
 
+.saino-profile-secondary:hover {
+  border-color: var(--saino-primary);
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-profile-primary:active,
+.saino-profile-secondary:active {
+  transform: scale(0.97);
+}
+
+/* Section introductions */
+
 .saino-profile-section-intro {
   margin: 0 0 18px;
 }
 
 .saino-profile-section-intro h3,
 .saino-experience-form h3 {
-  margin: 0 0 5px;
-  font-size: 18px;
+  margin: 0 0 6px;
+  color: var(--saino-text);
+  font-size: 17px;
+  font-weight: 700;
 }
 
 .saino-profile-section-intro p {
   margin: 0;
   color: var(--saino-text-muted);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
+/* Work and study form */
+
 .saino-experience-form {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 17px;
   border: 1px solid var(--saino-border);
-  border-radius: 15px;
+  border-radius: 14px;
   background: var(--saino-surface-muted);
 }
+
+/* Experience list */
 
 .saino-experience-list {
   display: flex;
@@ -336,14 +501,21 @@
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--saino-border);
-  border-radius: 14px;
+  border-radius: 13px;
+  background: var(--saino-surface);
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.saino-experience-card:hover {
+  border-color: rgba(0, 168, 132, 0.38);
+  background: var(--saino-primary-soft);
 }
 
 .saino-experience-icon {
   display: grid;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   place-items: center;
   border-radius: 11px;
   background: var(--saino-primary-soft);
@@ -357,13 +529,18 @@
 
 .saino-experience-copy h4 {
   margin: 0;
+  color: var(--saino-text);
   font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .saino-experience-copy p {
-  margin: 2px 0;
+  margin: 3px 0;
   color: var(--saino-text-muted);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .saino-experience-copy small {
@@ -372,30 +549,106 @@
 }
 
 .saino-experience-copy .saino-experience-description {
-  margin-top: 7px;
+  margin-top: 8px;
   color: var(--saino-text);
+  line-height: 1.6;
 }
 
 .saino-experience-actions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .saino-experience-actions button {
-  padding: 5px 8px;
+  min-height: 30px;
+  padding: 5px 9px;
   border: 0;
   border-radius: 7px;
   background: transparent;
   color: var(--saino-primary);
-  font-size: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.saino-experience-actions button:hover {
+  background: var(--saino-primary-soft);
 }
 
 .saino-experience-actions button.danger {
   color: var(--saino-danger);
 }
 
-@media (max-width:600px) {
+/* Keyboard focus */
+
+.saino-profile-dialog button:focus-visible,
+.saino-profile-dialog input:focus-visible,
+.saino-profile-dialog textarea:focus-visible,
+.saino-profile-dialog select:focus-visible,
+.saino-profile-dialog label:focus-within {
+  outline-color: var(--saino-primary);
+}
+
+.saino-profile-dialog button:focus-visible {
+  outline: 2px solid var(--saino-primary);
+  outline-offset: 2px;
+}
+
+/* Dark theme */
+
+[data-theme="dark"] .saino-profile-dialog,
+.dark .saino-profile-dialog {
+  background: var(--saino-surface);
+  color: var(--saino-text);
+}
+
+[data-theme="dark"] .saino-profile-header,
+.dark .saino-profile-header,
+[data-theme="dark"] .saino-profile-tabs,
+.dark .saino-profile-tabs {
+  background: var(--saino-surface);
+}
+
+[data-theme="dark"] .saino-profile-form input:not([type="checkbox"]),
+[data-theme="dark"] .saino-profile-form textarea,
+[data-theme="dark"] .saino-profile-form select,
+.dark .saino-profile-form input:not([type="checkbox"]),
+.dark .saino-profile-form textarea,
+.dark .saino-profile-form select {
+  background: var(--saino-surface-muted);
+  color: var(--saino-text);
+}
+
+[data-theme="dark"] .saino-profile-form input:focus,
+[data-theme="dark"] .saino-profile-form textarea:focus,
+[data-theme="dark"] .saino-profile-form select:focus,
+.dark .saino-profile-form input:focus,
+.dark .saino-profile-form textarea:focus,
+.dark .saino-profile-form select:focus {
+  background: var(--saino-surface);
+}
+
+[data-theme="dark"] .saino-experience-card,
+.dark .saino-experience-card {
+  background: var(--saino-surface);
+}
+
+[data-theme="dark"] .saino-experience-card:hover,
+.dark .saino-experience-card:hover {
+  background: var(--saino-primary-soft);
+}
+
+[data-theme="dark"] .saino-profile-error,
+.dark .saino-profile-error {
+  background: rgba(217, 48, 37, 0.14);
+  color: #ff8585;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
   .saino-profile-overlay {
     align-items: stretch;
     padding: 0;
@@ -403,22 +656,36 @@
 
   .saino-profile-dialog {
     width: 100%;
+    max-width: none;
     max-height: 100dvh;
     min-height: 100dvh;
     border: 0;
     border-radius: 0;
+    animation: none;
   }
 
   .saino-profile-header {
-    padding: 14px 16px 12px;
+    min-height: 62px;
+    padding: 11px 15px;
+  }
+
+  .saino-profile-header h2 {
+    font-size: 18px;
   }
 
   .saino-profile-tabs {
-    padding: 10px 14px;
+    gap: 6px;
+    padding: 10px 13px;
+  }
+
+  .saino-profile-tabs button {
+    min-height: 34px;
+    padding: 0 13px;
+    font-size: 11px;
   }
 
   .saino-profile-content {
-    padding: 15px 15px 24px;
+    padding: 15px 14px 26px;
   }
 
   .saino-profile-hero {
@@ -426,14 +693,38 @@
     margin-bottom: 61px;
   }
 
-  .saino-profile-avatar-wrap,
+  .saino-profile-avatar-wrap {
+    bottom: -52px;
+    left: 16px;
+    width: 100px;
+    height: 100px;
+  }
+
   .saino-profile-avatar {
     width: 100px;
     height: 100px;
   }
 
+  .saino-profile-identity {
+    margin-left: 3px;
+    margin-bottom: 19px;
+  }
+
+  .saino-profile-identity h3 {
+    font-size: 19px;
+  }
+
+  .saino-profile-form {
+    gap: 13px;
+  }
+
+  .saino-profile-field-grid {
+    gap: 11px;
+  }
+
   .saino-experience-card {
     flex-wrap: wrap;
+    padding: 12px;
   }
 
   .saino-experience-actions {
@@ -443,8 +734,61 @@
   }
 }
 
-@media (max-width:380px) {
+/* Small mobile */
+
+@media (max-width: 380px) {
   .saino-profile-field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .saino-profile-content {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .saino-profile-cover-change {
+    top: 9px;
+    right: 9px;
+    min-height: 31px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .saino-profile-actions {
+    flex-direction: column;
+  }
+
+  .saino-profile-primary,
+  .saino-profile-secondary {
+    width: 100%;
+  }
+}
+
+/* Animation */
+
+@keyframes saino-profile-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-profile-dialog,
+  .saino-profile-close,
+  .saino-profile-cover-change,
+  .saino-profile-avatar-change,
+  .saino-experience-card,
+  .saino-profile-primary,
+  .saino-profile-secondary {
+    animation: none;
+    transition: none;
   }
 }
