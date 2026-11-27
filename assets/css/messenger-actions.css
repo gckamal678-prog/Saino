@@ -1,44 +1,52 @@
 
-/* Saino WhatsApp-style long-press message selection */
+/* =========================================================
+   SAINO — WHATSAPP STYLE MESSAGE ACTIONS
+   UI ONLY — No JavaScript or functionality changes
+   ========================================================= */
+
+/* Message selection */
 
 .saino-message-row {
   position: relative;
-  transition: background-color 0.16s ease;
+  border-radius: 12px;
+  transition:
+    background-color 0.18s ease,
+    border-radius 0.18s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .saino-message-row .saino-message {
   transition:
-    box-shadow 0.16s ease,
-    outline-color 0.16s ease;
+    box-shadow 0.18s ease,
+    outline-color 0.18s ease;
 }
 
 .saino-message-row.saino-message-selected {
   border-radius: 13px;
-  background: rgba(7, 94, 84, 0.10);
+  background: rgba(0, 168, 132, 0.10);
 }
 
 .saino-message-row.saino-message-selected .saino-message {
-  outline: 2px solid var(--saino-primary, #075e54);
+  outline: 2px solid var(--saino-primary, #00a884);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(7, 94, 84, 0.08);
+  box-shadow: 0 0 0 4px rgba(0, 168, 132, 0.09);
 }
 
-/* Selection Toolbar */
+/* Selection toolbar */
 
 .saino-selection-toolbar {
   position: relative;
   z-index: 40;
   display: flex;
-  min-height: 54px;
+  min-height: 58px;
   flex: 0 0 auto;
   align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--saino-border, #dfe5e2);
+  gap: 7px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--saino-border, #e9edef);
   background: var(--saino-surface, #ffffff);
   color: var(--saino-text, #202c33);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(11, 20, 26, 0.08);
 }
 
 .saino-selection-toolbar[hidden] {
@@ -47,9 +55,9 @@
 
 .saino-selection-toolbar button {
   display: inline-flex;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
   align-items: center;
   justify-content: center;
   border: 0;
@@ -59,14 +67,21 @@
   font: inherit;
   font-size: 21px;
   cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .saino-selection-toolbar button:hover:not(:disabled) {
   background: rgba(127, 127, 127, 0.13);
 }
 
+.saino-selection-toolbar button:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
 .saino-selection-toolbar button:focus-visible {
-  outline: 2px solid var(--saino-primary, #075e54);
+  outline: 2px solid var(--saino-primary, #00a884);
   outline-offset: 2px;
 }
 
@@ -81,8 +96,9 @@
 }
 
 .saino-selection-count {
-  min-width: 20px;
-  font-size: 14px;
+  min-width: 24px;
+  color: var(--saino-text, #202c33);
+  font-size: 15px;
   font-weight: 700;
   text-align: center;
 }
@@ -91,7 +107,7 @@
   flex: 1;
 }
 
-/* Delete Dialog */
+/* Delete confirmation backdrop */
 
 .saino-delete-dialog-backdrop {
   position: fixed;
@@ -101,71 +117,192 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.42);
+  background: rgba(11, 20, 26, 0.52);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
+
+/* Delete confirmation dialog */
 
 .saino-delete-dialog {
   display: flex;
-  width: min(100%, 340px);
+  width: min(100%, 360px);
   flex-direction: column;
-  gap: 9px;
-  padding: 20px;
-  border: 1px solid var(--saino-border, #dfe5e2);
-  border-radius: 16px;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid var(--saino-border, #e9edef);
+  border-radius: 18px;
   background: var(--saino-surface, #ffffff);
   color: var(--saino-text, #202c33);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.24);
+  animation: saino-dialog-enter 0.18s ease-out;
 }
 
 .saino-delete-dialog > strong {
-  font-size: 17px;
+  color: var(--saino-text, #202c33);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .saino-delete-dialog > p {
-  margin: 0 0 5px;
+  margin: 0 0 7px;
   color: var(--saino-text-muted, #667781);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .saino-delete-dialog button {
-  min-height: 42px;
-  padding: 9px 12px;
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 14px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 11px;
   background: rgba(127, 127, 127, 0.10);
   color: inherit;
   font: inherit;
+  font-size: 14px;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    transform 0.16s ease;
 }
 
 .saino-delete-dialog button:hover {
-  background: rgba(127, 127, 127, 0.18);
+  background: rgba(127, 127, 127, 0.17);
+}
+
+.saino-delete-dialog button:active {
+  transform: scale(0.98);
+}
+
+.saino-delete-dialog button:focus-visible {
+  outline: 2px solid var(--saino-primary, #00a884);
+  outline-offset: 2px;
 }
 
 .saino-delete-dialog button.is-danger {
+  background: rgba(217, 48, 37, 0.08);
   color: #d93025;
+}
+
+.saino-delete-dialog button.is-danger:hover {
+  background: rgba(217, 48, 37, 0.15);
 }
 
 .saino-delete-dialog button.is-cancel {
   margin-top: 3px;
-  text-align: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--saino-text-muted, #667781);
 }
 
-/* Mobile */
+/* Dialog animation */
+
+@keyframes saino-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dark theme */
+
+[data-theme="dark"] .saino-selection-toolbar,
+.dark .saino-selection-toolbar {
+  border-bottom-color: var(--saino-border, #26353d);
+  background: var(--saino-surface, #111b21);
+  color: var(--saino-text, #e9edef);
+}
+
+[data-theme="dark"] .saino-selection-count,
+.dark .saino-selection-count {
+  color: var(--saino-text, #e9edef);
+}
+
+[data-theme="dark"] .saino-message-row.saino-message-selected,
+.dark .saino-message-row.saino-message-selected {
+  background: rgba(0, 168, 132, 0.14);
+}
+
+[data-theme="dark"] .saino-delete-dialog,
+.dark .saino-delete-dialog {
+  border-color: var(--saino-border, #26353d);
+  background: var(--saino-surface, #202c33);
+  color: var(--saino-text, #e9edef);
+}
+
+[data-theme="dark"] .saino-delete-dialog > strong,
+.dark .saino-delete-dialog > strong {
+  color: var(--saino-text, #e9edef);
+}
+
+[data-theme="dark"] .saino-delete-dialog > p,
+.dark .saino-delete-dialog > p {
+  color: var(--saino-text-muted, #aebac1);
+}
+
+[data-theme="dark"] .saino-delete-dialog button.is-cancel,
+.dark .saino-delete-dialog button.is-cancel {
+  color: var(--saino-text-muted, #aebac1);
+}
+
+/* Mobile layout */
 
 @media (max-width: 480px) {
   .saino-selection-toolbar {
-    min-height: 50px;
-    gap: 1px;
-    padding: 5px 7px;
+    min-height: 52px;
+    gap: 2px;
+    padding: 5px 8px;
   }
 
   .saino-selection-toolbar button {
-    width: 36px;
-    height: 36px;
-    flex-basis: 36px;
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
     font-size: 19px;
+  }
+
+  .saino-selection-count {
+    font-size: 14px;
+  }
+
+  .saino-delete-dialog {
+    width: min(100%, 340px);
+    gap: 9px;
+    padding: 19px;
+    border-radius: 16px;
+  }
+
+  .saino-delete-dialog > strong {
+    font-size: 17px;
+  }
+
+  .saino-delete-dialog > p {
+    font-size: 13px;
+  }
+}
+
+/* Reduced motion accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .saino-message-row,
+  .saino-message-row .saino-message,
+  .saino-selection-toolbar button,
+  .saino-delete-dialog button {
+    transition: none;
+  }
+
+  .saino-delete-dialog {
+    animation: none;
   }
 }
