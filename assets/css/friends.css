@@ -1,14 +1,9 @@
 
-/* =========================================================
-   SAINO — WHATSAPP STYLE FRIENDS UI
-   UI ONLY — Existing functionality and selectors preserved
-   ========================================================= */
+/* Saino Friends module */
 
 .saino-hidden {
   display: none !important;
 }
-
-/* Main page */
 
 .saino-friends-page {
   display: flex;
@@ -19,131 +14,169 @@
   flex-direction: column;
   overflow: auto;
   background: var(--saino-bg);
-  color: var(--saino-text);
 }
 
-/* Header */
+/* -------------------------
+   FRIENDS HEADER
+   ------------------------- */
 
 .saino-friends-header {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   display: flex;
-  min-height: 82px;
+  min-height: 92px;
   align-items: center;
   gap: 14px;
-  padding: 14px clamp(14px, 4vw, 42px);
+  padding: 18px clamp(16px, 4vw, 48px);
   border-bottom: 1px solid var(--saino-border);
   background: var(--saino-surface);
+}
+
+/* Refresh — LEFT SIDE */
+.saino-friends-reload {
+  order: 0;
+
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+  padding: 0;
+
+  border: 1px solid var(--saino-border);
+  border-radius: 50%;
+
+  background: var(--saino-surface);
+  color: var(--saino-text);
+
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+
+  transition:
+    background .18s ease,
+    color .18s ease,
+    transform .18s ease;
+}
+
+.saino-friends-reload:hover {
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
+}
+
+.saino-friends-reload:active {
+  transform: rotate(35deg);
+}
+
+/* Friends title — CENTER */
+.saino-friends-header > div {
+  order: 1;
+  min-width: 0;
+  flex: 1;
 }
 
 .saino-friends-header h1 {
   margin: 0;
   color: var(--saino-text);
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.35px;
+  font-size: 23px;
+  font-weight: 750;
 }
 
 .saino-friends-header p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--saino-text-muted);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 13px;
 }
 
-/* Header buttons */
+/* Back × — RIGHT SIDE */
+.saino-friends-back {
+  order: 2;
 
-.saino-friends-back,
-.saino-friends-reload {
   display: inline-flex;
-  min-width: 40px;
-  min-height: 40px;
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  flex: 0 0 42px;
   align-items: center;
   justify-content: center;
-  padding: 0 13px;
+
+  margin-left: auto;
+  padding: 0;
+
   border: 1px solid var(--saino-border);
-  border-radius: 22px;
+  border-radius: 50%;
+
   background: var(--saino-surface);
   color: var(--saino-text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+
+  /* पुरानो ‹ Chats लेखाइ लुकाएर × देखाउने */
+  font-size: 0;
+  line-height: 1;
   cursor: pointer;
+
   transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease;
+    background .18s ease,
+    color .18s ease,
+    transform .18s ease;
 }
 
-.saino-friends-back:hover,
-.saino-friends-reload:hover {
-  border-color: var(--saino-primary);
+.saino-friends-back::before {
+  content: "×";
+  display: block;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.saino-friends-back:hover {
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
 }
 
-.saino-friends-back:active,
-.saino-friends-reload:active {
-  transform: scale(0.95);
+.saino-friends-back:active {
+  transform: scale(.92);
 }
 
-.saino-friends-reload {
-  width: 42px;
-  margin-left: auto;
-  padding: 0;
-  font-size: 20px;
+.saino-friends-back:focus-visible,
+.saino-friends-reload:focus-visible {
+  outline: 2px solid var(--saino-primary);
+  outline-offset: 3px;
 }
 
-/* Navigation tabs */
+/* -------------------------
+   FRIENDS NAVIGATION
+   ------------------------- */
 
 .saino-friends-nav {
-  position: sticky;
-  top: 82px;
-  z-index: 4;
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 12px clamp(14px, 4vw, 42px);
+  padding: 14px clamp(16px, 4vw, 48px);
   border-bottom: 1px solid var(--saino-border);
   background: var(--saino-surface);
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.saino-friends-nav::-webkit-scrollbar {
-  display: none;
+  scrollbar-width: thin;
 }
 
 .saino-friends-nav button {
   display: inline-flex;
-  min-height: 37px;
+  min-height: 38px;
   align-items: center;
-  justify-content: center;
   gap: 7px;
   flex: 0 0 auto;
-  padding: 0 16px;
+  padding: 0 15px;
   border: 0;
   border-radius: 20px;
   background: var(--saino-surface-muted);
   color: var(--saino-text-muted);
-  font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
-  cursor: pointer;
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease;
-}
-
-.saino-friends-nav button:hover {
-  background: var(--saino-primary-soft);
-  color: var(--saino-primary-dark);
 }
 
 .saino-friends-nav button.active {
-  background: var(--saino-primary);
-  color: #fff;
+  background: var(--saino-primary-soft);
+  color: var(--saino-primary-dark);
 }
 
 .saino-friends-count {
@@ -155,27 +188,23 @@
   border-radius: 12px;
   background: var(--saino-primary);
   color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
 }
 
-.saino-friends-nav button.active .saino-friends-count {
-  background: rgba(255, 255, 255, 0.23);
-}
-
-/* Content */
+/* -------------------------
+   FRIENDS CONTENT
+   ------------------------- */
 
 .saino-friends-content {
-  width: min(100%, 920px);
+  width: min(100%, 980px);
   margin: 0 auto;
-  padding: 22px clamp(14px, 4vw, 38px) 40px;
+  padding: 22px clamp(14px, 4vw, 40px) 40px;
 }
 
 .saino-friends-content h2 {
-  margin: 20px 0 11px;
+  margin: 18px 0 10px;
   color: var(--saino-text);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
 }
 
 .saino-friends-content h2:first-child {
@@ -188,71 +217,45 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .saino-friends-search label {
-  color: var(--saino-text);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
 .saino-friends-search input {
   width: 100%;
-  min-height: 45px;
-  padding: 0 15px;
+  min-height: 46px;
+  padding: 0 14px;
   border: 1px solid var(--saino-border);
   border-radius: 24px;
-  outline: none;
-  background: var(--saino-surface-muted);
+  background: var(--saino-surface);
   color: var(--saino-text);
-  font: inherit;
-  font-size: 13px;
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background-color 0.18s ease;
 }
 
 .saino-friends-search input:focus {
   border-color: var(--saino-primary);
-  background: var(--saino-surface);
-  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.10);
-}
-
-.saino-friends-search input::placeholder {
-  color: var(--saino-text-muted);
+  outline: none;
 }
 
 /* Friend cards */
 
 .saino-friend-card {
   display: flex;
-  min-height: 74px;
+  min-height: 76px;
   align-items: center;
-  gap: 13px;
-  margin-bottom: 8px;
-  padding: 11px 13px;
+  gap: 14px;
+  margin-bottom: 9px;
+  padding: 12px 14px;
   border: 1px solid var(--saino-border);
-  border-radius: 13px;
+  border-radius: 14px;
   background: var(--saino-surface);
-  transition:
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.saino-friend-card:hover {
-  border-color: rgba(0, 168, 132, 0.4);
-  background: var(--saino-primary-soft);
 }
 
 .saino-friend-card .saino-avatar {
-  width: 49px;
-  height: 49px;
   flex: 0 0 49px;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .saino-friend-card-info {
@@ -266,18 +269,13 @@
 .saino-friend-card-info strong {
   color: var(--saino-text);
   font-size: 14px;
-  font-weight: 650;
-  line-height: 1.4;
 }
 
 .saino-friend-card-info small {
-  margin-top: 4px;
+  margin-top: 3px;
   color: var(--saino-text-muted);
   font-size: 11px;
-  line-height: 1.4;
 }
-
-/* Friend actions */
 
 .saino-friend-actions {
   display: flex;
@@ -287,27 +285,14 @@
 }
 
 .saino-friend-action {
-  display: inline-flex;
   min-height: 34px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
+  padding: 0 11px;
   border: 1px solid var(--saino-border);
-  border-radius: 20px;
+  border-radius: 18px;
   background: var(--saino-surface);
   color: var(--saino-text);
-  font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
-  cursor: pointer;
-  transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.saino-friend-action:active {
-  transform: scale(0.95);
 }
 
 .saino-friend-action.primary {
@@ -317,12 +302,10 @@
 }
 
 .saino-friend-action.primary:hover {
-  border-color: var(--saino-primary-dark);
   background: var(--saino-primary-dark);
 }
 
 .saino-friend-action.secondary:hover {
-  border-color: var(--saino-primary);
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
 }
@@ -332,185 +315,80 @@
 }
 
 .saino-friend-action.danger:hover {
-  border-color: var(--saino-danger);
-  background: rgba(217, 48, 37, 0.08);
-}
-
-.saino-friend-action:focus-visible,
-.saino-friends-nav button:focus-visible,
-.saino-friends-back:focus-visible,
-.saino-friends-reload:focus-visible {
-  outline: 2px solid var(--saino-primary);
-  outline-offset: 2px;
+  background: #fff0f0;
 }
 
 /* Empty state */
 
 .saino-friends-empty {
-  padding: 35px 16px;
+  padding: 28px 16px;
   color: var(--saino-text-muted);
-  font-size: 13px;
-  line-height: 1.6;
   text-align: center;
 }
 
-/* Notices */
+/* Notice */
 
 .saino-friends-notice {
-  margin: 13px clamp(14px, 4vw, 42px) 0;
-  padding: 12px 14px;
-  border: 1px solid transparent;
-  border-radius: 11px;
+  margin: 14px clamp(16px, 4vw, 48px) 0;
+  padding: 11px 14px;
+  border-radius: 10px;
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
 }
 
 .saino-friends-notice.error {
-  border-color: rgba(217, 48, 37, 0.15);
-  background: rgba(217, 48, 37, 0.08);
+  background: #fff0f0;
   color: var(--saino-danger);
 }
 
-/* Dark theme */
-
-[data-theme="dark"] .saino-friends-page,
-.dark .saino-friends-page {
-  color: var(--saino-text);
-}
-
-[data-theme="dark"] .saino-friends-header,
-.dark .saino-friends-header,
-[data-theme="dark"] .saino-friends-nav,
-.dark .saino-friends-nav {
-  background: var(--saino-surface);
-}
-
-[data-theme="dark"] .saino-friends-search input,
-.dark .saino-friends-search input {
-  background: var(--saino-surface-muted);
-  color: var(--saino-text);
-}
-
-[data-theme="dark"] .saino-friends-search input:focus,
-.dark .saino-friends-search input:focus {
-  background: var(--saino-surface);
-}
-
-[data-theme="dark"] .saino-friend-card,
-.dark .saino-friend-card {
-  background: var(--saino-surface);
-}
-
-[data-theme="dark"] .saino-friend-card:hover,
-.dark .saino-friend-card:hover {
-  background: var(--saino-primary-soft);
-}
-
-[data-theme="dark"] .saino-friend-action.danger:hover,
-.dark .saino-friend-action.danger:hover {
-  background: rgba(217, 48, 37, 0.14);
-}
-
-[data-theme="dark"] .saino-friends-notice.error,
-.dark .saino-friends-notice.error {
-  background: rgba(217, 48, 37, 0.13);
-}
-
-/* Tablet and mobile */
+/* -------------------------
+   MOBILE
+   ------------------------- */
 
 @media (max-width: 640px) {
   .saino-friends-header {
-    min-height: 68px;
-    gap: 10px;
-    padding: 10px 12px;
+    min-height: 76px;
+    gap: 12px;
+    padding: 12px 16px;
   }
 
   .saino-friends-header h1 {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .saino-friends-header p {
-    font-size: 11px;
+    font-size: 12px;
+  }
+
+  .saino-friends-reload,
+  .saino-friends-back {
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+    flex-basis: 42px;
   }
 
   .saino-friends-nav {
-    top: 68px;
-    gap: 7px;
     padding: 10px 12px;
   }
 
-  .saino-friends-nav button {
-    min-height: 35px;
-    padding: 0 13px;
-    font-size: 11px;
-  }
-
-  .saino-friends-content {
-    padding: 16px 12px 28px;
-  }
-
   .saino-friend-card {
-    min-height: 70px;
+    align-items: flex-start;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .saino-friend-card .saino-avatar {
-    width: 45px;
-    height: 45px;
-    flex-basis: 45px;
   }
 
   .saino-friend-card-info {
-    padding-top: 4px;
+    padding-top: 5px;
   }
 
   .saino-friend-actions {
     width: 100%;
     justify-content: flex-start;
-    padding-left: 55px;
+    padding-left: 63px;
   }
 
-  .saino-friend-action {
-    min-height: 32px;
-    padding: 0 11px;
-  }
-
-  .saino-friends-notice {
-    margin-right: 12px;
-    margin-left: 12px;
-  }
-}
-
-/* Small mobile */
-
-@media (max-width: 360px) {
-  .saino-friend-actions {
-    gap: 5px;
-    padding-left: 0;
-  }
-
-  .saino-friend-action {
-    padding: 0 9px;
-    font-size: 10px;
-  }
-
-  .saino-friends-header h1 {
-    font-size: 17px;
-  }
-}
-
-/* Reduced motion */
-
-@media (prefers-reduced-motion: reduce) {
-  .saino-friend-card,
-  .saino-friend-action,
-  .saino-friends-back,
-  .saino-friends-reload,
-  .saino-friends-search input {
-    transition: none;
+  .saino-friends-content {
+    padding: 16px 12px 30px;
   }
 }
