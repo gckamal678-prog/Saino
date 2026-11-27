@@ -294,3 +294,8 @@ body.saino-settings-open {
     padding: 13px;
   }
 }
+/* Keep the settings modal hidden until it is opened. */
+.saino-settings-overlay[hidden] {
+  display: none !important;
+}
+
