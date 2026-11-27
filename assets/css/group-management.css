@@ -1,464 +1,551 @@
 
-/* Saino Groups — mobile-first WhatsApp-inspired workspace */
+/* Saino Group Management — audited against existing Supabase APIs. */
+(function (global) {
+  "use strict";
+  if (global.SainoGroupManagement) return;
 
-.saino-groups-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100dvh;
-  min-height: 0;
-  overflow: hidden;
-  background: #fff;
-  color: #172b27;
-  font-family: inherit;
-}
+  const messages = () => global.KSKSupabaseMessages;
+  const friendsAPI = () => global.KSKSupabaseFriends;
+  const root = () => document.getElementById("saino-app");
+  const lang = () => global.KSKLanguage?.getLanguage?.() || "ne";
+  const t = (en, ne) => lang() === "en" ? en : ne;
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[c]);
+  const safeImage = value => {
+    try {
+      const u = new URL(String(value || ""), global.location.href);
+      return ["https:", "http:"].includes(u.protocol) ? u.href : "";
+    } catch (_) { return ""; }
+  };
+  const personAvatar = (person, fallback = "👤") => {
+    const src = safeImage(person?.avatar || person?.avatarUrl);
+    const initial = String(person?.name || person?.fullName || "")
+      .trim().charAt(0).toUpperCase() || fallback;
+    return src
+      ? `<img src="${esc(src)}" alt="" loading="lazy">`
+      : `<span>${esc(initial)}</span>`;
+  };
 
-.saino-groups-header {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 14px;
-  min-height: 66px;
-  padding: 10px 16px;
-  background: #075e54;
-  color: #fff;
-}
+  let view = "list", groups = [], friends = [], activeGroup = null;
+  let selected = new Set(), groupName = "", search = "", busy = false;
+  let notice = "", noticeKind = "info", memberMenu = "";
 
-.saino-groups-header > button {
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: inherit;
-  font-size: 25px;
-  cursor: pointer;
-}
-
-.saino-groups-header h1 {
-  margin: 0;
-  font-size: 19px;
-  font-weight: 700;
-}
-
-.saino-groups-header p {
-  margin: 3px 0 0;
-  font-size: 12px;
-  opacity: .82;
-}
-
-.saino-groups-header-icon {
-  margin-left: auto;
-  font-size: 26px;
-}
-
-.saino-groups-content {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 15px 16px 28px;
-}
-
-.saino-groups-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 2px 0 16px;
-}
-
-.saino-groups-toolbar h2 {
-  margin: 0;
-  font-size: 17px;
-}
-
-.saino-groups-toolbar p {
-  margin: 4px 0 0;
-  color: #71817c;
-  font-size: 12px;
-}
-
-.saino-group-create-button,
-.saino-group-empty button,
-.saino-group-create-footer button {
-  border: 0;
-  border-radius: 24px;
-  padding: 11px 15px;
-  background: #075e54;
-  color: #fff;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.saino-group-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 45px;
-  margin-bottom: 10px;
-  padding: 0 14px;
-  border-radius: 24px;
-  background: #f0f4f2;
-  color: #71817c;
-}
-
-.saino-group-search input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #172b27;
-  font: inherit;
-}
-
-.saino-group-list,
-.saino-group-friend-list,
-.saino-group-member-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.saino-group-row {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 13px;
-  padding: 13px 2px;
-  border: 0;
-  border-bottom: 1px solid #edf0ee;
-  background: #fff;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.saino-group-avatar,
-.saino-group-person-avatar,
-.saino-group-about-avatar {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 50%;
-  background: #dceee9;
-  color: #075e54;
-  font-weight: 700;
-}
-
-.saino-group-avatar {
-  width: 52px;
-  height: 52px;
-  font-size: 21px;
-}
-
-.saino-group-avatar img,
-.saino-group-person-avatar img,
-.saino-group-about-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.saino-group-row-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.saino-group-row-top,
-.saino-group-row-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.saino-group-row-top strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 15px;
-}
-
-.saino-group-row-top time,
-.saino-group-row-bottom small {
-  flex: 0 0 auto;
-  color: #82908b;
-  font-size: 11px;
-}
-
-.saino-group-row-bottom {
-  margin-top: 5px;
-  color: #71817c;
-  font-size: 13px;
-}
-
-.saino-group-row-bottom span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.saino-group-empty,
-.saino-group-state {
-  padding: 34px 14px;
-  color: #71817c;
-  text-align: center;
-}
-
-.saino-group-empty-icon {
-  font-size: 42px;
-}
-
-.saino-group-empty h3 {
-  margin: 12px 0 5px;
-  color: #20332e;
-}
-
-.saino-group-empty p {
-  max-width: 280px;
-  margin: 0 auto 18px;
-  font-size: 13px;
-}
-
-.saino-group-subheader {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  margin: -15px -16px 18px;
-  padding: 15px 16px;
-  background: #075e54;
-  color: #fff;
-}
-
-.saino-group-back {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-size: 25px;
-  cursor: pointer;
-}
-
-.saino-group-subheader h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.saino-group-subheader p {
-  margin: 3px 0 0;
-  font-size: 12px;
-  opacity: .82;
-}
-
-.saino-group-name-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  color: #52645e;
-  font-size: 13px;
-}
-
-.saino-group-name-field input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 13px 14px;
-  border: 1px solid #dce5e1;
-  border-radius: 12px;
-  outline-color: #075e54;
-  font: inherit;
-}
-
-.saino-group-selection-count {
-  margin: 0 0 11px;
-  color: #075e54;
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.saino-group-friend {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 3px;
-  border-bottom: 1px solid #edf0ee;
-  cursor: pointer;
-}
-
-.saino-group-person-avatar {
-  width: 42px;
-  height: 42px;
-  font-size: 16px;
-}
-
-.saino-group-person-name {
-  flex: 1;
-  min-width: 0;
-  color: #20332e;
-  font-size: 14px;
-}
-
-.saino-group-person-name small {
-  display: block;
-  margin-top: 3px;
-  color: #82908b;
-  font-size: 11px;
-}
-
-.saino-group-friend input {
-  width: 19px;
-  height: 19px;
-  accent-color: #075e54;
-}
-
-.saino-group-check {
-  color: #075e54;
-  font-weight: 700;
-}
-
-.saino-group-create-footer {
-  position: sticky;
-  bottom: -28px;
-  display: flex;
-  justify-content: flex-end;
-  margin: 12px -16px -28px;
-  padding: 13px 16px max(13px, env(safe-area-inset-bottom));
-  border-top: 1px solid #edf0ee;
-  background: #fff;
-}
-
-.saino-group-create-footer button:disabled {
-  opacity: .55;
-}
-
-.saino-group-notice {
-  flex: 0 0 auto;
-  margin: 10px 16px 0;
-  padding: 10px 12px;
-  border-radius: 9px;
-  background: #eef4f1;
-  color: #34564b;
-  font-size: 13px;
-}
-
-.saino-group-notice.error {
-  background: #fff0ee;
-  color: #a83226;
-}
-
-.saino-group-notice.success {
-  background: #e8f6ee;
-  color: #17643d;
-}
-
-.saino-group-about {
-  padding: 20px 10px;
-  border-bottom: 1px solid #edf0ee;
-  text-align: center;
-}
-
-.saino-group-about-avatar {
-  width: 76px;
-  height: 76px;
-  margin: 0 auto 10px;
-  font-size: 31px;
-}
-
-.saino-group-about h3 {
-  margin: 5px 0;
-}
-
-.saino-group-about p {
-  margin: 0;
-  color: #82908b;
-  font-size: 13px;
-}
-
-.saino-group-members-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 17px 2px 10px;
-  color: #52645e;
-  font-size: 13px;
-}
-
-.saino-group-members-heading button {
-  border: 0;
-  background: transparent;
-  color: #087e70;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.saino-group-member {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 2px;
-  border-bottom: 1px solid #edf0ee;
-}
-
-.saino-group-role {
-  flex: 0 0 auto;
-  color: #82908b;
-  font-size: 11px;
-}
-
-.saino-group-more {
-  border: 0;
-  background: transparent;
-  color: #52645e;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.saino-member-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  padding: 8px 0 12px 54px;
-}
-
-.saino-member-actions button {
-  border: 1px solid #dce5e1;
-  border-radius: 18px;
-  padding: 7px 10px;
-  background: #fff;
-  color: #34564b;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.saino-member-actions button:last-child {
-  color: #b8322a;
-}
-
-.saino-group-danger-zone {
-  margin-top: 20px;
-  padding: 14px 0;
-  border-top: 1px solid #edf0ee;
-}
-
-.saino-group-danger-zone button {
-  border: 0;
-  background: transparent;
-  color: #c33b32;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-@media (min-width: 700px) {
-  .saino-groups-overlay {
-    width: min(620px, 100%);
-    left: 50%;
-    transform: translateX(-50%);
-    box-shadow: 0 0 0 100vmax rgba(0,0,0,.38);
+  function currentUserId() {
+    return String(friendsAPI()?.getCurrentUserId?.() || "");
   }
-}
+
+  function setNotice(message, kind = "info") {
+    notice = message;
+    noticeKind = kind;
+    render();
+  }
+
+  function ensureTab() {
+    const nav = root()?.querySelector(".saino-tabs");
+    if (!nav) return;
+
+    let tab = nav.querySelector("[data-saino-groups-tab]");
+    if (!tab) {
+      tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "saino-tab";
+      tab.dataset.sainoGroupsTab = "true";
+      nav.appendChild(tab);
+    }
+
+    tab.textContent = t("Groups", "समूह");
+    tab.setAttribute("aria-label", t("Groups", "समूह"));
+  }
+
+  function close() {
+    document.querySelector(".saino-groups-overlay")?.remove();
+    root()?.querySelector("[data-saino-groups-tab]")?.classList.remove("active");
+    view = "list";
+    activeGroup = null;
+    memberMenu = "";
+  }
+
+  async function open() {
+    if (!root()) return;
+    view = "list";
+    activeGroup = null;
+    notice = "";
+    search = "";
+    root().querySelector("[data-saino-groups-tab]")?.classList.add("active");
+    render();
+    await loadGroups();
+  }
+
+  async function loadGroups() {
+    const api = messages();
+
+    if (typeof api?.getConversations !== "function") {
+      setNotice(t("Messenger service is unavailable.", "Messenger सेवा उपलब्ध छैन।"), "error");
+      return;
+    }
+
+    const result = await api.getConversations();
+
+    if (!result?.ok) {
+      groups = [];
+      setNotice(result?.message || t("Could not load groups.", "समूह लोड गर्न सकिएन।"), "error");
+      return;
+    }
+
+    groups = (Array.isArray(result.data) ? result.data : [])
+      .filter(x => x.type === "group");
+    render();
+  }
+
+  async function loadFriends() {
+    const api = friendsAPI();
+
+    if (typeof api?.getDashboard !== "function") {
+      friends = [];
+      return;
+    }
+
+    const result = await api.getDashboard();
+    friends = result?.ok && Array.isArray(result.data?.friends)
+      ? result.data.friends
+      : [];
+  }
+
+  function dateLabel(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(lang() === "en" ? "en-IN" : "ne-NP", {
+      day: "numeric",
+      month: "short"
+    });
+  }
+
+  function groupRow(g) {
+    const preview = g.lastMessage?.content ||
+      (g.lastMessage
+        ? t("Media message", "मिडिया सन्देश")
+        : t("No messages yet", "अहिलेसम्म सन्देश छैन"));
+
+    return `
+      <button type="button" class="saino-group-row" data-group-open="${esc(g.id)}">
+        <span class="saino-group-avatar">${personAvatar({name:g.name}, "👥")}</span>
+        <span class="saino-group-row-main">
+          <span class="saino-group-row-top">
+            <strong>${esc(g.name || t("Group", "समूह"))}</strong>
+            <time>${esc(dateLabel(g.lastMessageAt || g.createdAt))}</time>
+          </span>
+          <span class="saino-group-row-bottom">
+            <span>${esc(preview)}</span>
+            <small>${(g.members || []).length} ${t("members", "सदस्य")}</small>
+          </span>
+        </span>
+      </button>`;
+  }
+
+  function searchBox(placeholder) {
+    return `
+      <label class="saino-group-search">
+        <span aria-hidden="true">⌕</span>
+        <input type="search" data-group-search
+          value="${esc(search)}" placeholder="${esc(placeholder)}">
+      </label>`;
+  }
+
+  function renderList() {
+    const items = groups.filter(g =>
+      String(g.name || "").toLowerCase().includes(search.toLowerCase())
+    );
+
+    return `
+      <div class="saino-groups-toolbar">
+        <div>
+          <h2>${t("Your groups", "तपाईंका समूहहरू")}</h2>
+          <p>${t("Your group conversations", "तपाईंका समूह कुराकानीहरू")}</p>
+        </div>
+        <button type="button" class="saino-group-create-button" data-group-create>
+          ＋ ${t("New group", "नयाँ समूह")}
+        </button>
+      </div>
+      ${searchBox(t("Search groups", "समूह खोज्नुहोस्"))}
+      ${!items.length ? `
+        <div class="saino-group-empty">
+          <div class="saino-group-empty-icon">👥</div>
+          <h3>${t("No groups yet", "अहिलेसम्म समूह छैन")}</h3>
+          <p>${t("Create a group to chat with several friends.", "धेरै साथीहरूसँग कुराकानी गर्न समूह बनाउनुहोस्।")}</p>
+          <button type="button" data-group-create>${t("Create group", "समूह बनाउनुहोस्")}</button>
+        </div>` : `
+        <div class="saino-group-list">${items.map(groupRow).join("")}</div>`}`;
+  }
+
+  function renderPicker(mode) {
+    const existing = new Set((activeGroup?.members || []).map(m => String(m.id)));
+
+    const maxSelectable = mode === "create"
+      ? 49
+      : Math.max(0, 50 - existing.size);
+    const atCapacity = selected.size >= maxSelectable;
+    const people = friends.filter(p => {
+      const id = String(p.id || p.userId || "");
+      return id && !existing.has(id) &&
+        String(p.name || "").toLowerCase().includes(search.toLowerCase());
+    });
+
+    return `
+      <div class="saino-group-subheader">
+        <button type="button" class="saino-group-back" data-group-back>←</button>
+        <div>
+          <h2>${mode === "add" ? t("Add participants", "सदस्य थप्नुहोस्") : t("New group", "नयाँ समूह")}</h2>
+          <p>${t("Choose friends", "साथीहरू छान्नुहोस्")}</p>
+        </div>
+      </div>
+      ${mode === "create" ? `
+        <label class="saino-group-name-field">
+          <span>${t("Group name", "समूहको नाम")}</span>
+          <input maxlength="60" data-group-name value="${esc(groupName)}"
+            placeholder="${t("Enter group name", "समूहको नाम लेख्नुहोस्")}">
+        </label>` : ""}
+      <p class="saino-group-selection-count">
+        ${selected.size} ${t("selected", "जना छानिए")} · ${t("Maximum", "अधिकतम")} ${maxSelectable}
+      </p>
+      ${searchBox(t("Search friends", "साथी खोज्नुहोस्"))}
+      ${!people.length ? `
+        <div class="saino-group-state">
+          ${friends.length
+            ? t("No available friends found.", "थप्न मिल्ने साथी भेटिएनन्।")
+            : t("Your friends list is empty.", "तपाईंको साथी सूची खाली छ।")}
+        </div>` : ""}
+      <div class="saino-group-friend-list">
+        ${people.map(p => {
+          const id = String(p.id || p.userId);
+          const checked = selected.has(id);
+          return `
+            <label class="saino-group-friend">
+              <span class="saino-group-person-avatar">${personAvatar(p)}</span>
+              <span class="saino-group-person-name">${esc(p.name || t("Friend", "साथी"))}</span>
+              <input type="checkbox" data-group-friend="${esc(id)}" ${checked ? "checked" : ""} ${!checked && atCapacity ? "disabled" : ""}>
+              <span class="saino-group-check">${checked ? "✓" : ""}</span>
+            </label>`;
+        }).join("")}
+      </div>
+      <div class="saino-group-create-footer">
+        <button type="button" data-group-picker-submit ${busy ? "disabled" : ""}>
+          ${busy
+            ? t("Please wait…", "कृपया पर्खनुहोस्…")
+            : mode === "add"
+              ? t("Add selected", "छानिएका थप्नुहोस्")
+              : t("Create group", "समूह बनाउनुहोस्")}
+        </button>
+      </div>`;
+  }
+
+  function renderDetails() {
+    if (!activeGroup) return renderList();
+
+    const members = activeGroup.members || [];
+    const owner = activeGroup.role === "owner";
+    const admin = owner || activeGroup.role === "admin";
+    const userId = currentUserId();
+
+    return `
+      <div class="saino-group-subheader">
+        <button type="button" class="saino-group-back" data-group-back>←</button>
+        <div>
+          <h2>${esc(activeGroup.name)}</h2>
+          <p>${members.length} ${t("members", "सदस्य")}</p>
+        </div>
+      </div>
+      <section class="saino-group-about">
+        <div class="saino-group-about-avatar">${personAvatar({name:activeGroup.name}, "👥")}</div>
+        <h3>${esc(activeGroup.name)}</h3>
+        <p>${t("Group conversation", "समूह कुराकानी")}</p>
+      </section>
+      <div class="saino-group-members-heading">
+        <strong>${t("Participants", "सदस्यहरू")} (${members.length})</strong>
+        ${admin ? `<button type="button" data-group-add>${t("Add members", "सदस्य थप्नुहोस्")}</button>` : ""}
+      </div>
+      <div class="saino-group-member-list">
+        ${members.map(m => `
+          <div class="saino-group-member">
+            <span class="saino-group-person-avatar">${personAvatar(m)}</span>
+            <span class="saino-group-person-name">
+              ${esc(m.name || t("Member", "सदस्य"))}
+              ${m.role === "owner" ? `<small>${t("Group owner", "समूह Owner")}</small>` : ""}
+            </span>
+            <span class="saino-group-role">${m.role === "owner" ? "Owner" : m.role === "admin" ? "Admin" : t("Member", "सदस्य")}</span>
+            ${admin && String(m.id) !== userId && m.role !== "owner" &&
+              (owner || m.role === "member")
+              ? `<button type="button" class="saino-group-more" data-member-menu="${esc(m.id)}" aria-label="${t("Member actions", "सदस्यका कार्यहरू")}">⋮</button>`
+              : ""}
+          </div>
+          ${memberMenu === String(m.id) && admin && String(m.id) !== userId && m.role !== "owner" ? `
+            <div class="saino-member-actions">
+              ${owner && m.role === "member" ? `<button type="button" data-member-action="promote" data-member-id="${esc(m.id)}">${t("Make admin", "Admin बनाउनुहोस्")}</button>` : ""}
+              ${owner && m.role === "admin" ? `<button type="button" data-member-action="demote" data-member-id="${esc(m.id)}">${t("Remove admin", "Admin हटाउनुहोस्")}</button>` : ""}
+              ${(owner || m.role === "member") ? `<button type="button" data-member-action="remove" data-member-id="${esc(m.id)}">${t("Remove member", "सदस्य हटाउनुहोस्")}</button>` : ""}
+            </div>` : ""}
+        `).join("")}
+      </div>
+      <div class="saino-group-danger-zone">
+        ${owner
+          ? `<p>${t("The group owner cannot leave until ownership is transferred.", "Ownership हस्तान्तरण नगरी Group Owner बाहिरिन मिल्दैन।")}</p>`
+          : `<button type="button" data-group-leave>${t("Exit group", "समूह छोड्नुहोस्")}</button>`}
+      </div>`;
+  }
+
+  function render() {
+    let overlay = document.querySelector(".saino-groups-overlay");
+
+    if (!overlay) {
+      overlay = document.createElement("section");
+      overlay.className = "saino-groups-overlay";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-label", t("Groups", "समूहहरू"));
+      document.body.appendChild(overlay);
+    }
+
+    const content = view === "create"
+      ? renderPicker("create")
+      : view === "add"
+        ? renderPicker("add")
+        : view === "details"
+          ? renderDetails()
+          : renderList();
+
+    overlay.innerHTML = `
+      <header class="saino-groups-header">
+        <button type="button" data-group-close aria-label="${t("Close", "बन्द गर्नुहोस्")}">←</button>
+        <div>
+          <h1>${t("Groups", "समूहहरू")}</h1>
+          <p>${t("Stay connected", "समूहमा जोडिइरहनुहोस्")}</p>
+        </div>
+        <span class="saino-groups-header-icon">👥</span>
+      </header>
+      ${notice ? `<div class="saino-group-notice ${esc(noticeKind)}">${esc(notice)}</div>` : ""}
+      <main class="saino-groups-content">${content}</main>`;
+  }
+
+  async function startCreate() {
+    view = "create";
+    selected = new Set();
+    groupName = "";
+    search = "";
+    notice = "";
+    await loadFriends();
+    render();
+  }
+
+  async function startAdd() {
+    view = "add";
+    selected = new Set();
+    search = "";
+    notice = "";
+    await loadFriends();
+    render();
+  }
+
+  async function submitPicker() {
+    if (busy) return;
+
+    if (!selected.size) {
+      setNotice(t("Select at least one friend.", "कम्तीमा एक जना साथी छान्नुहोस्।"), "error");
+      return;
+    }
+
+    busy = true;
+    render();
+
+    try {
+      if (view === "create") {
+        if (!groupName.trim()) {
+          busy = false;
+          setNotice(t("Enter a group name.", "समूहको नाम लेख्नुहोस्।"), "error");
+          return;
+        }
+
+        if (selected.size < 2) {
+          busy = false;
+          setNotice(t("Select at least two friends.", "कम्तीमा दुई जना साथी छान्नुहोस्।"), "error");
+          return;
+        }
+
+        const result = await messages().createGroup([...selected], groupName.trim());
+        if (!result?.ok) throw new Error(result?.message || t("Group creation failed.", "समूह बनाउन सकिएन।"));
+
+        view = "list";
+        notice = t("Group created.", "समूह बन्यो।");
+        noticeKind = "success";
+        await loadGroups();
+      } else {
+        for (const id of selected) {
+          const result = await messages().manageGroupMember(activeGroup.id, "add", id);
+          if (!result?.ok) throw new Error(result?.message || t("Could not add a member.", "सदस्य थप्न सकिएन।"));
+        }
+
+        const id = activeGroup.id;
+        await loadGroups();
+        activeGroup = groups.find(g => g.id === id) || activeGroup;
+        view = "details";
+        notice = t("Selected members added.", "छानिएका सदस्य थपिए।");
+        noticeKind = "success";
+      }
+    } catch (e) {
+      notice = e.message || t("Something went wrong.", "केही समस्या भयो।");
+      noticeKind = "error";
+    } finally {
+      busy = false;
+      render();
+    }
+  }
+
+  async function openDetails(id) {
+    activeGroup = groups.find(g => String(g.id) === String(id)) || null;
+    if (!activeGroup) return;
+    view = "details";
+    memberMenu = "";
+    render();
+  }
+
+  async function memberAction(action, id) {
+    if (busy || !activeGroup || !["promote", "demote", "remove"].includes(action)) return;
+
+    if (action === "remove" &&
+        !global.confirm(t("Remove this member from the group?", "यो सदस्यलाई समूहबाट हटाउने?"))) return;
+
+    busy = true;
+    render();
+    let result;
+    try {
+      result = await messages().manageGroupMember(activeGroup.id, action, id);
+    } catch (error) {
+      result = { ok: false, message: error?.message || "Request failed." };
+    } finally {
+      busy = false;
+    }
+
+    if (!result?.ok) {
+      setNotice(result?.message || t("Could not update member.", "सदस्य परिवर्तन गर्न सकिएन।"), "error");
+      return;
+    }
+
+    const groupId = activeGroup.id;
+    memberMenu = "";
+    await loadGroups();
+    activeGroup = groups.find(g => g.id === groupId) || activeGroup;
+    view = "details";
+    notice = t("Group updated.", "समूह अपडेट भयो।");
+    noticeKind = "success";
+    render();
+  }
+
+  async function leaveGroup() {
+    if (busy || activeGroup?.role === "owner") return;
+    const userId = currentUserId();
+
+    if (!activeGroup || !userId) {
+      setNotice(t("Your signed-in user could not be identified.", "लगइन भएको प्रयोगकर्ता पहिचान भएन।"), "error");
+      return;
+    }
+
+    if (!global.confirm(t("Are you sure you want to leave this group?", "के तपाईं यो समूह छोड्न चाहनुहुन्छ?"))) return;
+
+    const result = await messages().manageGroupMember(activeGroup.id, "remove", userId);
+
+    if (!result?.ok) {
+      setNotice(result?.message || t("Could not leave the group.", "समूह छोड्न सकिएन।"), "error");
+      return;
+    }
+
+    activeGroup = null;
+    view = "list";
+    notice = t("You left the group.", "तपाईं समूहबाट बाहिरिनुभयो।");
+    noticeKind = "success";
+    await loadGroups();
+  }
+
+  document.addEventListener("click", async e => {
+    if (e.target.closest("[data-saino-groups-tab]")) {
+      e.preventDefault();
+      await open();
+      return;
+    }
+    if (e.target.closest("[data-group-close]")) { close(); return; }
+    if (e.target.closest("[data-group-create]")) { await startCreate(); return; }
+    if (e.target.closest("[data-group-back]")) {
+      view = "list";
+      activeGroup = null;
+      memberMenu = "";
+      notice = "";
+      render();
+      return;
+    }
+
+    const row = e.target.closest("[data-group-open]");
+    if (row) { await openDetails(row.dataset.groupOpen); return; }
+
+    if (e.target.closest("[data-group-picker-submit]")) { await submitPicker(); return; }
+    if (e.target.closest("[data-group-add]")) { await startAdd(); return; }
+
+    const menu = e.target.closest("[data-member-menu]");
+    if (menu) {
+      memberMenu = memberMenu === menu.dataset.memberMenu ? "" : menu.dataset.memberMenu;
+      render();
+      return;
+    }
+
+    const action = e.target.closest("[data-member-action]");
+    if (action) {
+      await memberAction(action.dataset.memberAction, action.dataset.memberId);
+      return;
+    }
+
+    if (e.target.closest("[data-group-leave]")) await leaveGroup();
+  });
+
+  document.addEventListener("input", e => {
+    if (e.target.matches("[data-group-name]")) {
+      groupName = e.target.value;
+      return;
+    }
+
+    if (e.target.matches("[data-group-search]")) {
+      search = e.target.value || "";
+      const pos = search.length;
+      render();
+      const input = document.querySelector(".saino-groups-overlay [data-group-search]");
+      input?.focus();
+      input?.setSelectionRange(pos, pos);
+    }
+  });
+
+  document.addEventListener("change", e => {
+    const cb = e.target.closest("[data-group-friend]");
+    if (!cb) return;
+
+    if (cb.checked) selected.add(cb.dataset.groupFriend);
+    else selected.delete(cb.dataset.groupFriend);
+
+    render();
+  });
+
+  global.addEventListener("saino:app-ready", ensureTab);
+  global.addEventListener("saino:language-change", () => {
+    ensureTab();
+    if (document.querySelector(".saino-groups-overlay")) render();
+  });
+
+  global.addEventListener("ksk:messages-cloud-change", e => {
+    const action = e.detail?.action;
+    if (action === "group-created" || action === "group-members-changed") {
+      if (document.querySelector(".saino-groups-overlay")) loadGroups();
+    }
+  });
+
+  global.SainoGroupManagement = Object.freeze({
+    open,
+    close,
+    refresh: loadGroups
+  });
+})(window);
