@@ -1,3 +1,4 @@
+
 /* Saino Settings UI — account, language, notifications and chat preferences. */
 (function (global) {
   "use strict";
@@ -7,7 +8,6 @@
   const api = () => global.KSKSupabaseSettings;
   const push = () => global.KSKSupabasePush;
   const auth = () => global.KSKSupabaseAuth;
-
   const overlayId = "saino-settings-overlay";
 
   let settings = {};
@@ -31,15 +31,6 @@
       "'": "&#39;"
     })[char]);
 
-  const defaults = {
-    general: {
-      language: "ne"
-    },
-    chat: {
-      enterToSend: false
-    }
-  };
-
   function normalize(value) {
     const source =
       value && typeof value === "object" && !Array.isArray(value)
@@ -49,12 +40,14 @@
     return {
       ...source,
       general: {
-        ...defaults.general,
-        ...(source.general || {})
+        ...(source.general || {}),
+        language: ["ne", "en"].includes(source.general?.language)
+          ? source.general.language
+          : global.KSKLanguage?.getLanguage?.() || "ne"
       },
       chat: {
-        ...defaults.chat,
-        ...(source.chat || {})
+        ...(source.chat || {}),
+        enterToSend: source.chat?.enterToSend === true
       }
     };
   }
@@ -121,7 +114,8 @@
           >×</button>
         </header>
 
-        <nav class="saino-settings-tabs" aria-label="${tr("Settings sections", "सेटिङका भागहरू")}">
+        <nav class="saino-settings-tabs"
+          aria-label="${tr("Settings sections", "सेटिङका भागहरू")}">
           <button type="button" data-settings-tab="general">
             ${tr("General", "सामान्य")}
           </button>
@@ -169,26 +163,14 @@
   }
 
   async function loadSettings() {
-    const service = api();
-
-    if (!service?.loadMySettings) {
+    if (!api()?.loadMySettings) {
       throw new Error(
         tr("Settings service is unavailable.", "सेटिङ सेवा उपलब्ध छैन।")
       );
     }
 
-    const result = await service.loadMySettings();
-
+    const result = await api().loadMySettings();
     settings = normalize(result?.settings);
-
-    const savedLanguage = settings.general.language;
-
-    if (
-      ["ne", "en"].includes(savedLanguage) &&
-      global.KSKLanguage?.getLanguage?.() !== savedLanguage
-    ) {
-      global.KSKLanguage?.setLanguage?.(savedLanguage);
-    }
   }
 
   function savePatch(section, patch) {
@@ -230,7 +212,6 @@
 
     overlay.querySelectorAll("[data-settings-tab]").forEach(button => {
       const active = button.dataset.settingsTab === activeTab;
-
       button.classList.toggle("active", active);
       button.setAttribute("aria-current", active ? "page" : "false");
     });
@@ -251,10 +232,7 @@
 
   function renderGeneral(node) {
     const email = auth()?.getUser?.()?.email || "";
-
-    const language = settings.general.language ||
-      global.KSKLanguage?.getLanguage?.() ||
-      "ne";
+    const language = settings.general.language || "ne";
 
     node.innerHTML = `
       <section class="saino-settings-section">
@@ -305,20 +283,14 @@
   }
 
   function renderNotifications(node) {
-    if (!pushStatus) {
-      node.innerHTML = `
-        <div class="saino-settings-loading">
-          ${tr("Checking notification support…", "सूचना सुविधा जाँच हुँदैछ…")}
-        </div>
-      `;
-      return;
-    }
+    const supported = Boolean(
+      pushStatus?.ok &&
+      pushStatus.data &&
+      pushStatus.data.subscribed !== undefined
+    );
 
-    const supported = pushStatus.ok &&
-      pushStatus.data?.subscribed !== undefined;
-
-    const subscribed = Boolean(pushStatus.data?.subscribed);
-    const permission = pushStatus.data?.permission || "unknown";
+    const subscribed = Boolean(pushStatus?.data?.subscribed);
+    const permission = pushStatus?.data?.permission || "unknown";
 
     node.innerHTML = `
       <section class="saino-settings-section">
@@ -326,8 +298,8 @@
 
         <p class="saino-settings-description">
           ${tr(
-            "Receive notifications from Saino when the browser supports Web Push.",
-            "ब्राउजरले Web Push समर्थन गर्दा Saino का सूचनाहरू प्राप्त गर्नुहोस्।"
+            "Receive notifications from Saino when browser Push is configured.",
+            "ब्राउजर Push सुविधा जडान भएको अवस्थामा Saino का सूचनाहरू प्राप्त गर्नुहोस्।"
           )}
         </p>
 
@@ -336,11 +308,8 @@
             ? `
               <div class="saino-settings-notice">
                 ${esc(
-                  pushStatus.message ||
-                  tr(
-                    "Push notifications are not available in this browser.",
-                    "यो ब्राउजरमा Push सूचना उपलब्ध छैन।"
-                  )
+                  pushStatus?.message ||
+                  tr("Push notifications are not available.", "Push सूचना अहिले उपलब्ध छैन।")
                 )}
               </div>
             `
@@ -405,7 +374,7 @@
             <strong>${tr("Enter to send", "Enter थिचेर पठाउने")}</strong>
             <p>
               ${tr(
-                "Press Enter to send a message. Use Shift + Enter for a new line.",
+                "Press Enter to send. Use Shift + Enter for a new line.",
                 "Enter थिच्दा सन्देश पठिन्छ। नयाँ लाइनका लागि Shift + Enter थिच्नुहोस्।"
               )}
             </p>
@@ -438,8 +407,8 @@
 
         <p class="saino-settings-description">
           ${tr(
-            "Your birthday visibility and work or study details are managed in your Profile settings.",
-            "जन्मदिन कसले देख्न पाउने र काम वा अध्ययन विवरणको गोपनीयता Profile सेटिङमा व्यवस्थापन हुन्छ।"
+            "Birthday visibility and work or study details are managed in Profile settings.",
+            "जन्मदिन र काम वा अध्ययन विवरणको गोपनीयता Profile सेटिङमा व्यवस्थापन हुन्छ।"
           )}
         </p>
 
@@ -457,8 +426,8 @@
 
         <p class="saino-settings-hint">
           ${tr(
-            "Online visibility, last seen and read receipt controls are not connected to this settings model yet.",
-            "अनलाइन स्थिति, अन्तिम पटक देखिएको समय र Read Receipt नियन्त्रण यो Settings मोडलसँग अझै जोडिएका छैनन्।"
+            "Online visibility, last seen and read receipt controls are not connected yet.",
+            "अनलाइन स्थिति, अन्तिम पटक देखिएको समय र Read Receipt नियन्त्रण अझै जोडिएका छैनन्।"
           )}
         </p>
       </section>
@@ -466,13 +435,54 @@
   }
 
   async function refreshPushStatus() {
-    pushStatus = await push()?.getStatus?.() || {
-      ok: false,
-      message: tr(
-        "Push notification service is unavailable.",
-        "Push सूचना सेवा उपलब्ध छैन।"
-      )
-    };
+    try {
+      if (
+        !global.isSecureContext ||
+        !global.navigator?.serviceWorker ||
+        !global.PushManager
+      ) {
+        pushStatus = {
+          ok: false,
+          message: tr(
+            "Web Push requires a secure browser connection.",
+            "Web Push का लागि सुरक्षित ब्राउजर कनेक्सन आवश्यक छ।"
+          )
+        };
+        render();
+        return;
+      }
+
+      const registration =
+        await global.navigator.serviceWorker.getRegistration();
+
+      if (!registration) {
+        pushStatus = {
+          ok: false,
+          message: tr(
+            "Push is not configured yet: this app has no registered Service Worker.",
+            "Push सुविधा अझै जडान भएको छैन: यो एपमा Service Worker दर्ता गरिएको छैन।"
+          )
+        };
+        render();
+        return;
+      }
+
+      pushStatus = await push()?.getStatus?.() || {
+        ok: false,
+        message: tr(
+          "Push notification service is unavailable.",
+          "Push सूचना सेवा उपलब्ध छैन।"
+        )
+      };
+    } catch (error) {
+      pushStatus = {
+        ok: false,
+        message: error?.message || tr(
+          "Could not check notification status.",
+          "सूचनाको अवस्था जाँच गर्न सकिएन।"
+        )
+      };
+    }
 
     render();
   }
@@ -511,18 +521,17 @@
     const overlay = root();
 
     if (overlay) overlay.hidden = true;
-
     document.body.classList.remove("saino-settings-open");
   }
 
   async function togglePush() {
-    if (busy) return;
+    if (busy || !pushStatus?.ok) return;
 
     busy = true;
     render();
 
     try {
-      const subscribed = Boolean(pushStatus?.data?.subscribed);
+      const subscribed = Boolean(pushStatus.data?.subscribed);
 
       const result = subscribed
         ? await push()?.disable?.()
@@ -563,12 +572,18 @@
 
       if (!["ne", "en"].includes(value)) return;
 
+      const previous = settings.general.language;
+
       global.KSKLanguage?.setLanguage?.(value);
 
       try {
         await savePatch("general", { language: value });
         notify(tr("Language saved.", "भाषा सुरक्षित भयो।"));
       } catch (error) {
+        if (previous) {
+          global.KSKLanguage?.setLanguage?.(previous);
+        }
+
         notify(
           error.message || tr("Could not save language.", "भाषा सुरक्षित भएन।"),
           "error"
@@ -619,7 +634,6 @@
     }
 
     const actionButton = event.target.closest("[data-settings-action]");
-
     if (!actionButton) return;
 
     const action = actionButton.dataset.settingsAction;
@@ -651,23 +665,33 @@
       event.shiftKey ||
       event.ctrlKey ||
       event.altKey ||
-      event.metaKey
+      event.metaKey ||
+      event.isComposing
     ) {
       return;
     }
 
-    const textarea = event.target.closest(
-      "[data-saino-message-form] textarea[name='message']"
-    );
+    const target = event.target;
 
-    if (!textarea || settings.chat.enterToSend !== true) return;
+    if (
+      !target?.matches?.("textarea[name='message']") ||
+      !target.closest("[data-saino-message-form]") ||
+      settings.chat.enterToSend !== true
+    ) {
+      return;
+    }
 
     event.preventDefault();
 
-    const form = textarea.closest("form");
+    const form = target.closest("form");
+    const submitButton = form?.querySelector('button[type="submit"]');
 
-    if (form && !form.querySelector('[type="submit"]')?.disabled) {
-      form.requestSubmit();
+    if (form && !submitButton?.disabled) {
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit();
+      } else {
+        submitButton?.click();
+      }
     }
   }
 
@@ -703,6 +727,18 @@
   });
 
   global.addEventListener("saino:language-change", () => {
+    const navButton = document.querySelector(
+      "[data-saino-settings-open]"
+    );
+
+    if (navButton) {
+      navButton.textContent = tr("Settings", "सेटिङ्स");
+      navButton.setAttribute(
+        "aria-label",
+        tr("Open settings", "सेटिङ्स खोल्नुहोस्")
+      );
+    }
+
     const overlay = root();
     if (overlay && !overlay.hidden) render();
   });
