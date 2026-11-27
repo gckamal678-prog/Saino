@@ -1,98 +1,135 @@
 
-/* =========================================
-   SAINO FEED — WHATSAPP STYLE
-   UI/UX only
-========================================= */
+/* =========================================================
+   SAINO — FEED UI
+   WhatsApp-inspired responsive Feed
+   Theme-aware background: Light / Dark
+   ========================================================= */
 
 .saino-feed-panel {
   display: flex;
   min-width: 0;
   height: 100%;
-  flex: 1;
+  min-height: 0;
+  flex: 1 1 auto;
   flex-direction: column;
-  overflow: auto;
-  background: var(--saino-app-bg, #f4f7f6);
-  color: var(--saino-text);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  /* मुख्य सुधार: सेतो रङ स्थायी रूपमा नराख्ने */
+  background: var(--saino-bg, #f4f7f6);
+  color: var(--saino-text, #172b27);
+
   scrollbar-width: thin;
+  scrollbar-color: var(--saino-border, #dce5e1) transparent;
 }
 
-/* Header */
+.saino-feed-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.saino-feed-panel::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: var(--saino-border, #dce5e1);
+}
+
+/* -------------------------
+   FEED HEADER
+   ------------------------- */
 
 .saino-feed-header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+
   display: flex;
   min-height: 76px;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 14px clamp(16px, 4vw, 42px);
+  gap: 12px;
+
+  padding: 14px clamp(14px, 4vw, 42px);
+
   border-bottom: 1px solid var(--saino-border);
   background: var(--saino-surface);
+  color: var(--saino-text);
 }
 
 .saino-feed-header h1 {
   margin: 0;
+  color: var(--saino-text);
   font-size: 22px;
   font-weight: 750;
-  letter-spacing: -.4px;
+  line-height: 1.3;
 }
 
 .saino-feed-header p {
   margin: 4px 0 0;
   color: var(--saino-text-muted);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.4;
 }
-
-/* Refresh */
 
 .saino-feed-refresh {
-  min-height: 38px;
-  padding: 0 15px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  transition: transform .18s ease, background .18s ease;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 22px;
 }
 
-.saino-feed-refresh:active {
-  transform: scale(.96);
-}
-
-/* Composer and posts */
+/* -------------------------
+   COMPOSER
+   ------------------------- */
 
 .saino-feed-composer,
 .saino-feed-post {
   width: min(100% - 28px, 720px);
-  margin: 18px auto 0;
+  margin: 20px auto 0;
   padding: 18px;
+
   border: 1px solid var(--saino-border);
-  border-radius: 17px;
+  border-radius: 18px;
+
   background: var(--saino-surface);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, .035);
+  color: var(--saino-text);
+  box-shadow: var(--saino-shadow);
 }
 
 .saino-feed-composer-title {
   display: block;
   margin-bottom: 12px;
-  font-size: 14px;
+  color: var(--saino-text);
+  font-size: 15px;
   font-weight: 750;
 }
 
 .saino-feed-composer textarea {
   display: block;
   width: 100%;
-  min-height: 90px;
+  min-height: 100px;
   resize: vertical;
+
   padding: 13px 14px;
+
   border: 1px solid var(--saino-border);
-  border-radius: 13px;
+  border-radius: 14px;
   outline: none;
+
   background: var(--saino-surface-muted);
   color: var(--saino-text);
-  font: inherit;
+
+  font-family: inherit;
   font-size: 14px;
-  line-height: 1.6;
-  transition: border-color .18s ease, box-shadow .18s ease;
+  line-height: 1.5;
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease;
+}
+
+.saino-feed-composer textarea::placeholder {
+  color: var(--saino-text-muted);
+  opacity: .9;
 }
 
 .saino-feed-composer textarea:focus {
@@ -100,32 +137,37 @@
   box-shadow: 0 0 0 3px var(--saino-primary-soft);
 }
 
-.saino-feed-composer textarea::placeholder {
-  color: var(--saino-text-muted);
-}
-
-/* Composer actions */
+/* -------------------------
+   COMPOSER ACTIONS
+   ------------------------- */
 
 .saino-feed-composer-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 13px;
 }
 
 .saino-feed-file-label {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 42px;
   align-items: center;
-  gap: 7px;
-  padding: 0 12px;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 0 15px;
+
   border: 1px solid var(--saino-border);
-  border-radius: 20px;
+  border-radius: 24px;
+
   background: var(--saino-surface-muted);
   color: var(--saino-primary);
-  font-size: 12px;
-  font-weight: 750;
+
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
+
   transition: background .18s ease;
 }
 
@@ -144,49 +186,68 @@
 .saino-feed-file-name {
   min-width: 0;
   flex: 1;
+
   overflow: hidden;
+
   color: var(--saino-text-muted);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Feed list */
+/* Publish button */
+.saino-feed-composer-actions .saino-button {
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 24px;
+  background: var(--saino-primary);
+  color: #fff;
+  font-weight: 750;
+}
+
+.saino-feed-composer-actions .saino-button:hover {
+  background: var(--saino-primary-dark);
+}
+
+/* -------------------------
+   FEED LIST
+   ------------------------- */
 
 .saino-feed-list {
   width: 100%;
-  padding-bottom: 26px;
+  padding-bottom: 28px;
+
+  /* List को खाली भाग पनि Theme अनुसार */
+  background: var(--saino-bg);
 }
 
 .saino-feed-post {
   margin-top: 14px;
-  transition: border-color .18s ease, box-shadow .18s ease;
 }
 
-.saino-feed-post:hover {
-  border-color: var(--saino-border-strong, var(--saino-border));
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .055);
-}
-
-/* Post header */
+/* -------------------------
+   POST HEADER
+   ------------------------- */
 
 .saino-feed-post-header {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 11px;
 }
 
 .saino-feed-avatar {
   display: grid;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
   place-items: center;
   overflow: hidden;
-  border: 1px solid var(--saino-border);
+
   border-radius: 50%;
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
+
   font-size: 15px;
   font-weight: 750;
 }
@@ -202,12 +263,13 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .saino-feed-author strong {
   overflow: hidden;
-  font-size: 13px;
+  color: var(--saino-text);
+  font-size: 14px;
   font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -215,45 +277,52 @@
 
 .saino-feed-author time {
   color: var(--saino-text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
-/* Delete */
-
 .saino-feed-delete {
-  min-width: 34px;
-  min-height: 34px;
-  padding: 0 9px;
+  flex: 0 0 auto;
+  padding: 7px 9px;
+
   border: 0;
-  border-radius: 18px;
+  border-radius: 8px;
   background: transparent;
   color: var(--saino-danger);
-  font-size: 12px;
+
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background .18s ease;
 }
 
 .saino-feed-delete:hover {
-  background: rgba(220, 60, 60, .09);
+  background: rgba(217, 67, 67, .1);
 }
 
-/* Post content */
+/* -------------------------
+   POST TEXT
+   ------------------------- */
 
 .saino-feed-post-text {
   margin: 16px 0;
   overflow-wrap: anywhere;
+
   color: var(--saino-text);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.65;
 }
+
+/* -------------------------
+   POST MEDIA
+   ------------------------- */
 
 .saino-feed-media-link {
   display: block;
-  margin: 13px -2px 0;
+  margin: 12px -2px 0;
   overflow: hidden;
+
   border: 1px solid var(--saino-border);
   border-radius: 13px;
+
   background: var(--saino-surface-muted);
 }
 
@@ -261,49 +330,73 @@
   display: block;
   width: 100%;
   max-height: 560px;
+  margin: 0 auto;
+
   object-fit: contain;
 }
 
-/* Footer */
+/* -------------------------
+   POST FOOTER
+   ------------------------- */
 
 .saino-feed-post-footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 13px;
-  padding-top: 12px;
+
+  margin-top: 12px;
+  padding-top: 10px;
+
   border-top: 1px solid var(--saino-border);
+
   color: var(--saino-text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
-/* Empty and loading state */
+/* -------------------------
+   EMPTY / LOADING STATE
+   ------------------------- */
 
 .saino-feed-state {
   width: min(100% - 28px, 720px);
   margin: 22px auto;
-  padding: 30px 20px;
+  padding: 26px;
+
   border: 1px dashed var(--saino-border);
-  border-radius: 16px;
+  border-radius: 14px;
+
   background: var(--saino-surface);
   color: var(--saino-text-muted);
+
+  font-size: 14px;
+  line-height: 1.5;
   text-align: center;
-  font-size: 13px;
-  line-height: 1.6;
 }
+
+/* -------------------------
+   FEED MORE
+   ------------------------- */
 
 .saino-feed-more-wrap {
   display: flex;
   justify-content: center;
-  padding: 5px 16px 28px;
+  padding: 4px 16px 28px;
 }
 
-/* Feed visibility */
+.saino-feed-more-wrap button {
+  border-radius: 22px;
+}
+
+/* -------------------------
+   FEED OPEN STATE
+   ------------------------- */
 
 .saino-app.feed-open .saino-feed-panel {
   display: flex;
 }
 
-/* Mobile */
+/* -------------------------
+   MOBILE
+   ------------------------- */
 
 @media (max-width: 640px) {
   .saino-app.feed-open .saino-sidebar {
@@ -313,15 +406,22 @@
   .saino-app.feed-open .saino-feed-panel {
     display: flex;
     width: 100%;
-    min-height: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+
+    /* मोबाइलमा एपकै Dark Theme */
+    background: var(--saino-bg, #0b141a);
+    color: var(--saino-text, #e9edef);
   }
 
   .saino-feed-header {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    min-height: 62px;
-    padding: 10px 15px;
+    min-height: 76px;
+    gap: 8px;
+    padding: 10px 14px;
+
+    background: var(--saino-surface, #0b141a);
+    border-bottom-color: var(--saino-border);
   }
 
   .saino-feed-header h1 {
@@ -329,7 +429,13 @@
   }
 
   .saino-feed-header p {
-    font-size: 11px;
+    font-size: 12px;
+  }
+
+  .saino-feed-refresh {
+    min-height: 40px;
+    padding: 0 13px;
+    font-size: 12px;
   }
 
   .saino-feed-composer,
@@ -337,16 +443,41 @@
     width: calc(100% - 20px);
     margin-top: 10px;
     padding: 14px;
-    border-radius: 15px;
+
+    border-radius: 17px;
+    background: var(--saino-surface, #0b141a);
+  }
+
+  .saino-feed-composer-title {
+    font-size: 14px;
   }
 
   .saino-feed-composer textarea {
-    min-height: 82px;
-    font-size: 13px;
+    min-height: 100px;
+    padding: 12px;
+
+    border-radius: 14px;
+    background: var(--saino-surface-muted, #202c33);
+    color: var(--saino-text, #e9edef);
+
+    font-size: 14px;
   }
 
   .saino-feed-composer-actions {
-    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 12px;
+  }
+
+  .saino-feed-file-label {
+    min-height: 42px;
+    padding: 0 13px;
+    border-radius: 24px;
+    background: var(--saino-surface-muted, #202c33);
+  }
+
+  .saino-feed-composer-actions .saino-button {
+    min-height: 44px;
+    padding: 0 21px;
   }
 
   .saino-feed-file-name {
@@ -354,28 +485,81 @@
     order: 3;
   }
 
+  .saino-feed-list {
+    padding-bottom: 24px;
+    background: var(--saino-bg, #0b141a);
+  }
+
+  .saino-feed-post {
+    margin-top: 14px;
+  }
+
   .saino-feed-avatar {
-    width: 40px;
-    height: 40px;
-    flex-basis: 40px;
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .saino-feed-author strong {
+    font-size: 13px;
+  }
+
+  .saino-feed-author time {
+    font-size: 11px;
   }
 
   .saino-feed-post-text {
-    font-size: 13px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+
+  .saino-feed-media-link {
+    border-radius: 12px;
+  }
+
+  .saino-feed-media {
+    max-height: 560px;
   }
 
   .saino-feed-state {
     width: calc(100% - 20px);
-    margin: 16px auto;
-    padding: 24px 16px;
+    background: var(--saino-surface, #0b141a);
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .saino-feed-refresh,
-  .saino-feed-file-label,
+/* -------------------------
+   DARK THEME SAFETY
+   ------------------------- */
+
+@media (max-width: 640px) {
+  .saino-feed-panel,
+  .saino-feed-list {
+    background-color: #0b141a;
+  }
+
+  .saino-feed-composer,
   .saino-feed-post,
-  .saino-feed-delete {
-    transition: none !important;
+  .saino-feed-state {
+    background-color: #0b141a;
+    color: #e9edef;
+  }
+
+  .saino-feed-header {
+    background-color: #0b141a;
+  }
+
+  .saino-feed-composer textarea {
+    background-color: #202c33;
+    color: #e9edef;
+  }
+
+  .saino-feed-post-text,
+  .saino-feed-author strong {
+    color: #e9edef;
+  }
+
+  .saino-feed-author time,
+  .saino-feed-header p {
+    color: #8696a0;
   }
 }
