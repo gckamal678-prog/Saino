@@ -19,15 +19,10 @@
 
         <div class="saino-welcome-flag">🇳🇵</div>
 
-        <div class="saino-welcome-logo">S</div>
-
-        <h1 class="saino-welcome-name">Saino</h1>
-
-        <div class="saino-welcome-underline"></div>
-
-        <p class="saino-welcome-slogan">
-          नेपाली मन, नेपाली संग
-        </p>
+        <img
+          class="saino-welcome-logo"
+          src="assets/images/saino-logo-512.png"
+          alt="साइनो — नेपाली मन, नेपाली संग">
 
         <div class="saino-splash-loading">
           <span class="saino-splash-dots">
@@ -45,22 +40,14 @@
   function welcomeMarkup() {
     return `
       <section class="saino-welcome-content"
-               aria-labelledby="saino-welcome-title">
+               aria-label="Saino मा स्वागत छ">
 
         <div class="saino-welcome-flag">🇳🇵</div>
 
-        <div class="saino-welcome-logo">S</div>
-
-        <h1 class="saino-welcome-name"
-            id="saino-welcome-title">
-          Saino
-        </h1>
-
-        <div class="saino-welcome-underline"></div>
-
-        <p class="saino-welcome-slogan">
-          नेपाली मन, नेपाली संग
-        </p>
+        <img
+          class="saino-welcome-logo"
+          src="assets/images/saino-logo-512.png"
+          alt="साइनो — नेपाली मन, नेपाली संग">
 
         <p class="saino-welcome-description">
           टाढा भएका आफ्ना मान्छेसँग नजिक बनौँ।
@@ -112,10 +99,6 @@
     if (dismissed || !overlay) return;
 
     overlay.innerHTML = welcomeMarkup();
-    overlay.setAttribute(
-      "aria-label",
-      "Saino मा स्वागत छ"
-    );
   }
 
   function mount() {
@@ -125,10 +108,7 @@
 
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute(
-      "aria-label",
-      "Saino splash screen"
-    );
+    overlay.setAttribute("aria-label", "Saino splash screen");
 
     overlay.innerHTML = splashMarkup();
 
@@ -136,9 +116,7 @@
 
     overlay.addEventListener("click", event => {
       if (
-        event.target.closest(
-          "[data-saino-welcome-enter]"
-        )
+        event.target.closest("[data-saino-welcome-enter]")
       ) {
         dismiss();
       }
