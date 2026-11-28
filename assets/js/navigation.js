@@ -77,7 +77,8 @@
     if (!host) return "chats";
     const profileOverlay = document.getElementById("saino-profile-overlay");
     if (profileOverlay && !profileOverlay.hidden) return "profile";
-    if (host.querySelector(".saino-story-page")) return "story";
+    const storyPage = host.querySelector(".saino-story-page");
+    if (storyPage && !storyPage.classList.contains("saino-hidden")) return "story";
     if (host.querySelector(".saino-friends-page")) return "friends";
     if (host.classList.contains("feed-open")) return "feed";
     return "chats";
