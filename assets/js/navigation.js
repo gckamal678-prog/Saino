@@ -1,35 +1,76 @@
 
-/* =========================================
-   SAINO — WHATSAPP STYLE BOTTOM NAVIGATION
+/* =========================================================
+   SAINO — PERMANENT BOTTOM NAVIGATION
    Chats | Friends | Feed | Notifications | Profile
-========================================= */
+========================================================= */
 
 (function (global) {
   "use strict";
 
   if (global.SainoNavigation) return;
 
-  const root = () => document.getElementById("saino-app");
-  const nav = () => root()?.querySelector(".saino-tabs");
+  const APP_SELECTOR = "#saino-app .saino-app";
+  const NAV_SELECTOR = ".saino-tabs";
 
-  const english = () =>
+  const app = () => document.querySelector(APP_SELECTOR);
+  const nav = () => app()?.querySelector(NAV_SELECTOR);
+
+  const isEnglish = () =>
     global.KSKLanguage?.getLanguage?.() === "en";
 
-  const label = (en, ne) => english() ? en : ne;
+  const label = (en, ne) => isEnglish() ? en : ne;
+
+  const icons = {
+    chats: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-4 2v-5.2A7.5 7.5 0 1 1 20 11.5Z"/>
+        <path d="M8 10h8M8 14h5"/>
+      </svg>`,
+
+    friends: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="8" r="3.2"/>
+        <path d="M2.8 20v-1.3a6.2 6.2 0 0 1 12.4 0V20"/>
+        <path d="M16 5.2a3.2 3.2 0 0 1 0 6.2M17 14a5.2 5.2 0 0 1 4.2 5.1V20"/>
+      </svg>`,
+
+    feed: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2.5"/>
+        <path d="M7 7h10M7 11h10M7 15h6"/>
+        <path d="M16 15h1"/>
+      </svg>`,
+
+    notifications: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/>
+        <path d="M10 21h4"/>
+      </svg>`,
+
+    profile: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21a8 8 0 0 1 16 0"/>
+      </svg>`
+  };
 
   function safeImageURL(value) {
-    try {
-      const url = new URL(String(value || ""), global.location.href);
+    if (!value) return "";
 
-      return ["https:", "http:"].includes(url.protocol)
-        ? url.href
-        : "";
+    try {
+      const url = new URL(String(value), global.location.href);
+
+      if (url.protocol !== "https:" && url.protocol !== "http:") {
+        return "";
+      }
+
+      return url.href;
     } catch (_) {
       return "";
     }
   }
 
-  function makeButton(selector, dataName) {
+  function createButton(selector, dataAttribute) {
     const host = nav();
     if (!host) return null;
 
@@ -39,14 +80,15 @@
       button = document.createElement("button");
       button.type = "button";
       button.className = "saino-tab";
-      button.setAttribute(dataName, "true");
+      button.setAttribute(dataAttribute, "true");
       host.appendChild(button);
     }
 
+    button.classList.add("saino-nav-item");
     return button;
   }
 
-  function setButton(button, icon, text, extraClass = "") {
+  function paintButton(button, icon, text, extraClass = "") {
     if (!button) return;
 
     button.classList.add("saino-nav-item");
@@ -55,33 +97,91 @@
       button.classList.add(extraClass);
     }
 
-    button.innerHTML = `
-      <span class="saino-nav-icon" aria-hidden="true">
-        ${icon}
-      </span>
-      <span class="saino-nav-label">${text}</span>
-    `;
+    const currentLabel = button.querySelector(".saino-nav-label");
+    const currentIcon = button.querySelector(".saino-nav-icon");
+
+    if (!currentLabel || !currentIcon) {
+      button.innerHTML = `
+        <span class="saino-nav-icon" aria-hidden="true">
+          ${icon}
+        </span>
+        <span class="saino-nav-label"></span>
+      `;
+    } else if (currentIcon.dataset.icon !== icon) {
+      currentIcon.innerHTML = icon;
+    }
+
+    const labelNode = button.querySelector(".saino-nav-label");
+    const iconNode = button.querySelector(".saino-nav-icon");
+
+    if (iconNode) iconNode.dataset.icon = icon;
+    if (labelNode) labelNode.textContent = text;
 
     button.setAttribute("aria-label", text);
     button.title = text;
   }
 
-  function makeNotificationButton() {
-    const button = makeButton(
+  function ensureChats() {
+    const host = nav();
+    if (!host) return null;
+
+    let button = host.querySelector('[data-saino-view="chats"]');
+
+    if (!button) {
+      button = host.querySelector(
+        ".saino-tab:not([data-saino-friends-tab]):not([data-saino-view='feed']):not([data-saino-profile-open])"
+      );
+    }
+
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "saino-tab";
+      host.appendChild(button);
+    }
+
+    button.dataset.sainoView = "chats";
+    paintButton(button, icons.chats, label("Chats", "च्याट"));
+
+    return button;
+  }
+
+  function ensureFriends() {
+    const button = createButton(
+      "[data-saino-friends-tab]",
+      "data-saino-friends-tab"
+    );
+
+    paintButton(button, icons.friends, label("Friends", "साथीहरू"));
+    return button;
+  }
+
+  function ensureFeed() {
+    const button = createButton(
+      '[data-saino-view="feed"]',
+      "data-saino-view"
+    );
+
+    if (button) button.dataset.sainoView = "feed";
+
+    paintButton(button, icons.feed, label("Feed", "फिड"));
+    return button;
+  }
+
+  function ensureNotifications() {
+    const button = createButton(
       "[data-saino-notifications-tab]",
       "data-saino-notifications-tab"
     );
 
-    if (!button) return;
-
-    setButton(
+    paintButton(
       button,
-      "♧",
+      icons.notifications,
       label("Notifications", "सूचना"),
       "saino-nav-notifications"
     );
 
-    const count = global.SainoNotificationsUI?.getUnreadCount?.() || 0;
+    if (!button) return null;
 
     let badge = button.querySelector(".saino-nav-badge");
 
@@ -91,50 +191,81 @@
       button.appendChild(badge);
     }
 
+    const count =
+      Number(global.SainoNotificationsUI?.getUnreadCount?.()) || 0;
+
     badge.textContent = count > 99 ? "99+" : String(count);
     badge.hidden = count < 1;
+
+    return button;
   }
 
-  function makeProfileButton() {
-    const button = nav()?.querySelector("[data-saino-profile-open]");
-    if (!button) return;
+  function ensureProfile() {
+    const button = createButton(
+      "[data-saino-profile-open]",
+      "data-saino-profile-open"
+    );
 
-    button.classList.add("saino-nav-item", "saino-nav-profile");
+    if (!button) return null;
 
-    const image = button.querySelector(".saino-nav-avatar");
-    const avatar = image?.getAttribute("src") || "";
+    button.classList.add("saino-nav-profile");
 
-    button.innerHTML = `
-      <span class="saino-nav-icon saino-nav-profile-icon">
-        ${
-          avatar
-            ? `<img class="saino-nav-avatar" src="${avatar}" alt="">`
-            : `<span class="saino-nav-avatar-fallback">👤</span>`
-        }
-      </span>
-      <span class="saino-nav-label">
-        ${label("Profile", "प्रोफाइल")}
-      </span>
-    `;
+    let icon = button.querySelector(".saino-nav-icon");
+
+    if (!icon) {
+      button.innerHTML = `
+        <span class="saino-nav-icon saino-nav-profile-icon"></span>
+        <span class="saino-nav-label"></span>
+      `;
+      icon = button.querySelector(".saino-nav-icon");
+    }
+
+    icon.classList.add("saino-nav-profile-icon");
+
+    const labelNode = button.querySelector(".saino-nav-label");
+    if (labelNode) {
+      labelNode.textContent = label("Profile", "प्रोफाइल");
+    }
 
     button.setAttribute(
       "aria-label",
       label("Open profile", "प्रोफाइल खोल्नुहोस्")
     );
+
+    button.title = label("Profile", "प्रोफाइल");
+
+    return button;
   }
 
-  function updateAvatar(profile) {
+  function updateAvatar(profile = {}) {
     const button = nav()?.querySelector("[data-saino-profile-open]");
-    if (!button) return;
+    const icon = button?.querySelector(".saino-nav-profile-icon");
 
-    const avatarURL = safeImageURL(profile?.avatar);
-
-    const icon = button.querySelector(".saino-nav-profile-icon");
     if (!icon) return;
 
-    icon.innerHTML = avatarURL
-      ? `<img class="saino-nav-avatar" src="${avatarURL}" alt="">`
-      : `<span class="saino-nav-avatar-fallback">👤</span>`;
+    const avatar = safeImageURL(
+      profile.avatar ||
+      profile.avatar_url ||
+      profile.photoURL ||
+      profile.photo_url
+    );
+
+    if (avatar) {
+      let image = icon.querySelector("img");
+
+      if (!image) {
+        icon.innerHTML = "";
+        image = document.createElement("img");
+        image.className = "saino-nav-avatar";
+        image.alt = "";
+        image.referrerPolicy = "no-referrer";
+        icon.appendChild(image);
+      }
+
+      if (image.src !== avatar) image.src = avatar;
+    } else if (!icon.querySelector("svg")) {
+      icon.innerHTML = icons.profile;
+    }
   }
 
   async function loadAvatar() {
@@ -146,94 +277,157 @@
       const profile = await api.getMyProfile();
       updateAvatar(profile || {});
     } catch (error) {
-      console.warn("Saino navigation profile photo:", error);
+      console.warn("Saino navigation avatar:", error);
+    }
+  }
+
+  function moveNavigationOutsideSidebar() {
+    const host = app();
+    const sidebar = host?.querySelector(".saino-sidebar");
+    const navigation = sidebar?.querySelector(NAV_SELECTOR);
+
+    if (!host || !navigation) return;
+
+    if (navigation.parentElement !== host) {
+      host.appendChild(navigation);
     }
   }
 
   function arrangeNavigation() {
-    const host = nav();
+    const host = app();
     if (!host) return;
 
-    const chats = host.querySelector('[data-saino-view="chats"]')
-      || host.querySelector(".saino-tab:not([data-saino-friends-tab])");
+    moveNavigationOutsideSidebar();
 
-    const friends = host.querySelector("[data-saino-friends-tab]");
-    const feed = host.querySelector('[data-saino-view="feed"]');
-    const notifications = host.querySelector("[data-saino-notifications-tab]");
-    const profile = host.querySelector("[data-saino-profile-open]");
+    const navigation = nav();
+    if (!navigation) return;
 
-    if (chats) {
-      chats.dataset.sainoView = "chats";
-      setButton(chats, "▤", label("Chats", "च्याट"));
-    }
+    const chats = ensureChats();
+    const friends = ensureFriends();
+    const feed = ensureFeed();
+    const notifications = ensureNotifications();
+    const profile = ensureProfile();
 
-    if (friends) {
-      setButton(friends, "♧", label("Friends", "साथीहरू"));
-    }
+    [
+      chats,
+      friends,
+      feed,
+      notifications,
+      profile
+    ].forEach(button => {
+      if (button && button.parentElement === navigation) {
+        navigation.appendChild(button);
+      }
+    });
 
-    if (feed) {
-      setButton(feed, "▧", label("Feed", "फिड"));
-    }
+    navigation.classList.add("saino-navigation-fixed");
 
-    if (notifications) {
-      setButton(
-        notifications,
-        "♧",
-        label("Notifications", "सूचना"),
-        "saino-nav-notifications"
-      );
-    }
-
-    makeProfileButton();
-
-    /*
-      Keep Settings and Groups available in their existing
-      modules, but do not show them in the five-item bottom bar.
-    */
-    host.querySelectorAll(
+    navigation.querySelectorAll(
       "[data-saino-settings-open], [data-saino-groups-tab]"
     ).forEach(button => {
       button.classList.add("saino-nav-hidden");
     });
 
-    /*
-      Arrange the five main options in the requested order.
-    */
-    [chats, friends, feed, notifications, profile].forEach(button => {
-      if (button) host.appendChild(button);
-    });
+    refreshActiveState();
+  }
 
-    makeNotificationButton();
-    makeProfileButton();
+  function refreshActiveState() {
+    const host = app();
+    const navigation = nav();
+
+    if (!host || !navigation) return;
+
+    let activeSelector = '[data-saino-view="chats"]';
+
+    if (host.classList.contains("feed-open")) {
+      activeSelector = '[data-saino-view="feed"]';
+    } else if (
+      host.querySelector(".saino-friends-page")
+    ) {
+      activeSelector = "[data-saino-friends-tab]";
+    }
+
+    navigation.querySelectorAll(".saino-nav-item").forEach(button => {
+      const active = button.matches(activeSelector);
+
+      button.classList.toggle("active", active);
+
+      if (active) {
+        button.setAttribute("aria-current", "page");
+      } else {
+        button.removeAttribute("aria-current");
+      }
+    });
   }
 
   function openNotifications() {
-    const headerButton = root()?.querySelector(
-      "[data-notification-toggle]"
+    const button = document.querySelector(
+      "#saino-app [data-notification-toggle]"
     );
 
-    if (headerButton) {
-      headerButton.click();
+    if (button) {
+      button.click();
     }
   }
 
-  function handleNavigation(event) {
-    const button = event.target.closest(
+  function handleNavigationClick(event) {
+    const target = event.target;
+
+    if (!(target instanceof Element)) return;
+
+    const notificationButton = target.closest(
       "[data-saino-notifications-tab]"
     );
 
-    if (!button) return;
+    if (notificationButton) {
+      event.preventDefault();
+      openNotifications();
+      refreshActiveState();
+      return;
+    }
 
-    event.preventDefault();
-    openNotifications();
+    const navButton = target.closest(
+      ".saino-tabs .saino-nav-item"
+    );
+
+    if (!navButton) return;
+
+    global.requestAnimationFrame(refreshActiveState);
   }
 
-  document.addEventListener("click", handleNavigation);
+  function observeApp() {
+    const host = app();
+    if (!host || host.dataset.sainoNavObserver === "true") return;
 
-  global.addEventListener("saino:app-ready", () => {
+    host.dataset.sainoNavObserver = "true";
+
+    const observer = new MutationObserver(() => {
+      if (!nav()) {
+        const sidebarNav = host.querySelector(
+          ".saino-sidebar .saino-tabs"
+        );
+
+        if (sidebarNav) arrangeNavigation();
+      }
+
+      refreshActiveState();
+    });
+
+    observer.observe(host, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  function start() {
     arrangeNavigation();
+    observeApp();
     loadAvatar();
-  });
+  }
+
+  document.addEventListener("click", handleNavigationClick);
+
+  global.addEventListener("saino:app-ready", start);
 
   global.addEventListener("saino:language-change", arrangeNavigation);
   global.addEventListener("ksk:language-change", arrangeNavigation);
@@ -242,11 +436,12 @@
     updateAvatar(event.detail?.profile || {});
   });
 
-  global.addEventListener("ksk:notification-cloud-change", makeNotificationButton);
+  global.addEventListener("ksk:notification-cloud-change", ensureNotifications);
 
   global.SainoNavigation = Object.freeze({
     refresh: arrangeNavigation,
-    refreshAvatar: loadAvatar
+    refreshAvatar: loadAvatar,
+    updateAvatar
   });
 
 })(window);
