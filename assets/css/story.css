@@ -1,0 +1,7 @@
+/* Saino Story screen shell */
+#saino-app .saino-story-page { display:flex; align-items:center; justify-content:center; overflow:auto; background:var(--saino-bg,#f0f2f5); }
+.saino-story-empty { width:min(440px,calc(100% - 32px)); margin:auto; padding:36px 24px; text-align:center; border:1px solid var(--saino-border,#e8eeeb); border-radius:22px; background:var(--saino-surface,#fff); box-shadow:var(--saino-shadow,0 2px 14px rgba(20,50,42,.07)); }
+.saino-story-symbol { display:grid; width:64px; height:64px; margin:0 auto 18px; place-items:center; border:3px solid var(--saino-primary,#008f72); border-radius:50%; color:var(--saino-primary,#008f72); font-size:38px; }
+.saino-story-empty h1 { margin:0 0 10px; font-size:24px; }
+.saino-story-empty p { margin:0 0 14px; color:var(--saino-text-muted,#71817c); }
+.saino-story-empty span { color:var(--saino-text-muted,#71817c); font-size:12px; }
