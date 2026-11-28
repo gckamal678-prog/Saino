@@ -11,7 +11,7 @@
   const overlayId = "saino-settings-overlay";
 
   let settings = {};
-  let activeTab = "general";
+  let activeTab = "account";
   let userId = "";
   let busy = false;
   let pushStatus = null;
@@ -116,6 +116,9 @@
 
         <nav class="saino-settings-tabs"
           aria-label="${tr("Settings sections", "सेटिङका भागहरू")}">
+          <button type="button" data-settings-tab="account">
+            ${tr("Account", "खाता")}
+          </button>
           <button type="button" data-settings-tab="general">
             ${tr("General", "सामान्य")}
           </button>
@@ -127,6 +130,9 @@
           </button>
           <button type="button" data-settings-tab="privacy">
             ${tr("Privacy", "गोपनीयता")}
+          </button>
+          <button type="button" data-settings-tab="security">
+            ${tr("Security", "सुरक्षा")}
           </button>
         </nav>
 
@@ -140,26 +146,6 @@
 
     document.body.appendChild(overlay);
     return overlay;
-  }
-
-  function injectNavigation() {
-    const nav = document.querySelector(".saino-tabs");
-
-    if (!nav || nav.querySelector("[data-saino-settings-open]")) {
-      return;
-    }
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "saino-tab";
-    button.dataset.sainoSettingsOpen = "true";
-    button.textContent = tr("Settings", "सेटिङ्स");
-    button.setAttribute(
-      "aria-label",
-      tr("Open settings", "सेटिङ्स खोल्नुहोस्")
-    );
-
-    nav.appendChild(button);
   }
 
   async function loadSettings() {
@@ -219,36 +205,38 @@
     const node = content();
     if (!node) return;
 
-    if (activeTab === "general") {
+    if (activeTab === "account") {
+      renderAccount(node);
+    } else if (activeTab === "general") {
       renderGeneral(node);
     } else if (activeTab === "notifications") {
       renderNotifications(node);
     } else if (activeTab === "chat") {
       renderChat(node);
+    } else if (activeTab === "security") {
+      renderSecurity(node);
     } else {
       renderPrivacy(node);
     }
   }
 
-  function renderGeneral(node) {
-    const email = auth()?.getUser?.()?.email || "";
-    const language = settings.general.language || "ne";
-
+  function renderAccount(node) {
+    const user = auth()?.getUser?.();
+    const email = user?.email || "";
     node.innerHTML = `
       <section class="saino-settings-section">
-        <h3>${tr("Account", "खाता")}</h3>
-
+        <h3>${tr("Account information", "खाता विवरण")}</h3>
         <div class="saino-settings-row">
-          <div>
-            <strong>${tr("Email address", "इमेल ठेगाना")}</strong>
-            <p>${esc(email || tr("Not available", "उपलब्ध छैन"))}</p>
-          </div>
-          <span class="saino-settings-readonly">
-            ${tr("Account", "खाता")}
-          </span>
+          <div><strong>${tr("Email address", "इमेल ठेगाना")}</strong><p>${esc(email || tr("Not available", "उपलब्ध छैन"))}</p></div>
+          <span class="saino-settings-readonly">${tr("Signed in", "लगइन भएको")}</span>
         </div>
-      </section>
+        <p class="saino-settings-hint">${tr("Your account is managed securely through Saino authentication.", "तपाईंको खाता Saino को सुरक्षित प्रमाणीकरण प्रणालीबाट व्यवस्थापन हुन्छ।")}</p>
+      </section>`;
+  }
 
+  function renderGeneral(node) {
+    const language = settings.general.language || "ne";
+    node.innerHTML = `
       <section class="saino-settings-section">
         <h3>${tr("Language", "भाषा")}</h3>
 
@@ -434,6 +422,16 @@
     `;
   }
 
+  function renderSecurity(node) {
+    node.innerHTML = `
+      <section class="saino-settings-section">
+        <h3>${tr("Password and security", "पासवर्ड र सुरक्षा")}</h3>
+        <p class="saino-settings-description">${tr("Send a password reset link to your registered email address.", "दर्ता गरिएको इमेलमा पासवर्ड परिवर्तन गर्ने लिंक पठाउनुहोस्।")}</p>
+        <button type="button" class="saino-settings-primary" data-settings-action="reset-password">${tr("Send password reset link", "पासवर्ड परिवर्तन लिंक पठाउनुहोस्")}</button>
+        <p class="saino-settings-hint">${tr("Never share your password or reset link with anyone.", "आफ्नो पासवर्ड वा परिवर्तन लिंक कसैसँग साझा नगर्नुहोस्।")}</p>
+      </section>`;
+  }
+
   async function refreshPushStatus() {
     try {
       if (
@@ -493,7 +491,7 @@
     overlay.hidden = false;
     document.body.classList.add("saino-settings-open");
 
-    activeTab = "general";
+    activeTab = "account";
     pushStatus = null;
 
     renderLoading();
@@ -651,6 +649,21 @@
     if (action === "open-profile") {
       close();
       global.SainoProfileUI?.open?.();
+      return;
+    }
+
+    if (action === "reset-password") {
+      const email = auth()?.getUser?.()?.email || "";
+      if (!email || !auth()?.resetPassword) {
+        notify(tr("Account email is unavailable.", "खाताको इमेल उपलब्ध छैन।"), "error");
+        return;
+      }
+      actionButton.disabled = true;
+      auth().resetPassword(email).then(() => {
+        notify(tr("Password reset link sent to your email.", "पासवर्ड परिवर्तन लिंक इमेलमा पठाइयो।"));
+      }).catch(error => {
+        notify(error?.message || tr("Could not send password reset link.", "पासवर्ड परिवर्तन लिंक पठाउन सकिएन।"), "error");
+      }).finally(() => { if (actionButton.isConnected) actionButton.disabled = false; });
     }
   }
 
@@ -696,12 +709,6 @@
   }
 
   function handleDocumentClick(event) {
-    if (event.target.closest("[data-saino-settings-open]")) {
-      event.preventDefault();
-      open();
-      return;
-    }
-
     const overlay = root();
 
     if (overlay && event.target === overlay) {
@@ -715,8 +722,6 @@
   document.addEventListener("keydown", handleKeydown);
 
   global.addEventListener("saino:app-ready", () => {
-    injectNavigation();
-
     const nextUserId = auth()?.getUser?.()?.id || "";
 
     if (nextUserId !== userId) {
