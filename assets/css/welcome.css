@@ -1,24 +1,39 @@
 
-/* SAINO — Splash and Welcome Design */
+/* =========================================
+   SAINO — WELCOME & SPLASH SCREEN
+   Smaller center logo + Nepali background
+========================================= */
+
+:root {
+  --saino-blue: #0755d9;
+  --saino-deep-blue: #082b72;
+  --saino-red: #dc2638;
+}
 
 .saino-welcome-overlay {
   position: fixed;
   z-index: 99999;
   inset: 0;
+
   display: grid;
   place-items: center;
+
   overflow-y: auto;
-  padding: 24px 18px;
+  overflow-x: hidden;
+
+  padding: 20px 18px;
   color: #fff;
+
   background:
     linear-gradient(
       180deg,
-      rgba(3, 20, 48, .30),
-      rgba(3, 20, 48, .70)
+      rgba(3, 20, 48, .25),
+      rgba(3, 20, 48, .48),
+      rgba(3, 20, 48, .72)
     ),
     url("../images/saino-welcome-bg.png")
-      center center / cover no-repeat,
-    #123e72;
+      center center / cover no-repeat;
+
   opacity: 1;
   transition: opacity .45s ease, visibility .45s ease;
   isolation: isolate;
@@ -30,93 +45,174 @@
   pointer-events: none;
 }
 
+/* Main content */
+
 .saino-welcome-content {
-  width: min(100%, 480px);
-  text-align: center;
+  width: min(100%, 440px);
   margin: auto;
+  text-align: center;
   animation: saino-welcome-rise .7s both ease-out;
 }
 
+/* Nepal flag */
+
 .saino-welcome-flag {
-  margin-bottom: 12px;
-  font-size: 34px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.2));
+  margin-bottom: 8px;
+  font-size: 28px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.3));
 }
+
+/* Center Saino logo — reduced size */
 
 .saino-welcome-logo {
   display: block;
-  width: min(78vw, 340px);
+
+  width: min(60vw, 250px);
   height: auto;
-  max-height: 38vh;
+  max-height: 30vh;
+
   object-fit: contain;
-  margin: 0 auto 22px;
-  border-radius: 22px;
-  filter: drop-shadow(0 12px 24px rgba(0,0,0,.3));
+  object-position: center;
+
+  margin: 0 auto 18px;
+
+  border-radius: 20px;
+
+  filter:
+    drop-shadow(0 9px 18px rgba(0,0,0,.35));
 }
+
+/* Welcome name */
+
+.saino-welcome-name {
+  margin: 0;
+
+  color: #fff;
+  font-size: clamp(38px, 10vw, 58px);
+  font-weight: 900;
+
+  text-shadow: 0 3px 8px rgba(0,0,0,.55);
+}
+
+/* Underline */
+
+.saino-welcome-underline {
+  width: 100px;
+  height: 6px;
+
+  margin: 10px auto 16px;
+
+  border-radius: 99px;
+  background: var(--saino-red);
+}
+
+/* Slogan */
+
+.saino-welcome-slogan {
+  margin: 0 0 12px;
+
+  color: #fff;
+  font-size: clamp(17px, 4.5vw, 23px);
+  font-weight: 900;
+
+  text-shadow: 0 2px 7px rgba(0,0,0,.7);
+}
+
+/* Description */
 
 .saino-welcome-description {
   max-width: 360px;
-  margin: 12px auto 25px;
+
+  margin: 12px auto 22px;
+
   color: #fff;
-  text-shadow: 0 1px 6px rgba(0,0,0,.8);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.8;
+
+  text-shadow: 0 2px 7px rgba(0,0,0,.85);
 }
+
+/* Buttons */
 
 .saino-welcome-actions {
   display: grid;
   gap: 11px;
-  width: min(100%, 330px);
+
+  width: min(100%, 310px);
   margin: 0 auto;
 }
 
 .saino-welcome-start,
 .saino-welcome-skip {
-  min-height: 52px;
-  padding: 12px 20px;
+  width: 100%;
+  min-height: 50px;
+
+  padding: 12px 18px;
+
   border: 0;
   border-radius: 999px;
+
   font: inherit;
+  font-size: 16px;
   font-weight: 800;
+
   cursor: pointer;
-  transition: transform .18s ease, box-shadow .18s ease;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease;
 }
 
 .saino-welcome-start {
   color: #fff;
-  background: linear-gradient(110deg, #0755d9, #07358f);
-  box-shadow: 0 9px 22px rgba(5,45,125,.3);
+
+  background: linear-gradient(
+    110deg,
+    #0755d9,
+    #07358f
+  );
+
+  box-shadow: 0 8px 20px rgba(0,30,100,.35);
 }
 
 .saino-welcome-skip {
   color: #082b72;
-  background: rgba(255,255,255,.95);
+  background: #fff;
 }
 
-.saino-welcome-start:hover,
-.saino-welcome-skip:hover {
-  transform: translateY(-2px);
+.saino-welcome-start:active,
+.saino-welcome-skip:active {
+  transform: scale(.97);
 }
+
+/* Bottom note */
 
 .saino-welcome-bottom-note {
-  margin: 24px 0 0;
+  margin: 22px 0 0;
+
   color: #fff;
   font-size: 12px;
-  font-weight: 700;
-  text-shadow: 0 1px 5px rgba(0,0,0,.7);
+  font-weight: 800;
+
+  text-shadow: 0 2px 6px rgba(0,0,0,.85);
 }
+
+/* Splash loading */
 
 .saino-splash-loading {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  margin-top: 28px;
+
+  margin-top: 24px;
+
   color: #fff;
-  text-shadow: 0 1px 5px rgba(0,0,0,.65);
   font-size: 13px;
   font-weight: 700;
+
+  text-shadow: 0 2px 6px rgba(0,0,0,.7);
 }
 
 .saino-splash-dots {
@@ -127,8 +223,10 @@
 .saino-splash-dots span {
   width: 7px;
   height: 7px;
+
   border-radius: 50%;
   background: #fff;
+
   animation: saino-dot-pulse 1s infinite ease-in-out;
 }
 
@@ -140,11 +238,14 @@
   animation-delay: .3s;
 }
 
+/* Animations */
+
 @keyframes saino-welcome-rise {
   from {
     opacity: 0;
     transform: translateY(16px) scale(.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -156,22 +257,64 @@
     opacity: .35;
     transform: translateY(0);
   }
+
   30% {
     opacity: 1;
     transform: translateY(-5px);
   }
 }
 
+/* Small screens */
+
 @media (max-width: 380px) {
   .saino-welcome-overlay {
-    padding: 18px;
+    padding: 16px 14px;
   }
 
   .saino-welcome-logo {
-    width: min(76vw, 300px);
-    max-height: 34vh;
+    width: min(58vw, 220px);
+    max-height: 26vh;
+    margin-bottom: 14px;
+  }
+
+  .saino-welcome-description {
+    margin-bottom: 17px;
+    font-size: 14px;
+  }
+
+  .saino-welcome-actions {
+    width: min(100%, 290px);
+  }
+
+  .saino-welcome-bottom-note {
+    margin-top: 18px;
   }
 }
+
+/* Short screens */
+
+@media (max-height: 700px) {
+  .saino-welcome-overlay {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .saino-welcome-logo {
+    width: min(52vw, 210px);
+    max-height: 24vh;
+    margin-bottom: 10px;
+  }
+
+  .saino-welcome-description {
+    margin-bottom: 14px;
+  }
+
+  .saino-welcome-bottom-note {
+    margin-top: 14px;
+  }
+}
+
+/* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
   .saino-welcome-overlay,
