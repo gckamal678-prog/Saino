@@ -67,24 +67,6 @@
     render();
   }
 
-  function ensureNavigation() {
-    const nav = root()?.querySelector(".saino-tabs");
-    if (!nav) return;
-
-    let button = nav.querySelector("[data-saino-friends-tab]");
-
-    if (!button) {
-      button = document.createElement("button");
-      button.type = "button";
-      button.className = "saino-tab";
-      button.dataset.sainoFriendsTab = "true";
-      nav.appendChild(button);
-    }
-
-    button.textContent = text("Friends", "साथीहरू");
-    button.setAttribute("aria-label", text("Friends", "साथीहरू"));
-  }
-
   function openChats() {
     view = "chats";
 
@@ -92,15 +74,11 @@
     if (!app) return;
 
     app.querySelector(".saino-friends-page")?.remove();
-    app.classList.remove("chat-open");
+    app.classList.remove("chat-open", "feed-open");
 
     app.querySelector(".saino-sidebar")?.classList.remove("saino-hidden");
     app.querySelector(".saino-conversation")?.classList.remove("saino-hidden");
 
-    app.querySelector("[data-saino-friends-tab]")?.classList.remove("active");
-
-    app.querySelector(".saino-tabs .saino-tab:not([data-saino-friends-tab])")
-      ?.classList.add("active");
   }
 
   async function openFriends() {
@@ -110,7 +88,6 @@
     searchResults = [];
     message = "";
 
-    ensureNavigation();
     render();
 
     await loadData();
@@ -546,17 +523,11 @@
 
     if (!app || view !== "friends") return;
 
-    ensureNavigation();
 
-    app.classList.remove("chat-open");
+    app.classList.remove("chat-open", "feed-open");
 
     app.querySelector(".saino-sidebar")?.classList.add("saino-hidden");
     app.querySelector(".saino-conversation")?.classList.add("saino-hidden");
-
-    app.querySelector("[data-saino-friends-tab]")?.classList.add("active");
-
-    app.querySelector(".saino-tabs .saino-tab:not([data-saino-friends-tab])")
-      ?.classList.remove("active");
 
     let page = app.querySelector(".saino-friends-page");
 
@@ -826,24 +797,6 @@
 
   document.addEventListener("click", event => {
 
-    const friendsTab = event.target.closest(
-      "[data-saino-friends-tab]"
-    );
-
-    if (friendsTab) {
-      openFriends();
-      return;
-    }
-
-    const chatsTab = event.target.closest(
-      ".saino-tabs .saino-tab:not([data-saino-friends-tab])"
-    );
-
-    if (chatsTab) {
-      openChats();
-      return;
-    }
-
     const sectionButton = event.target.closest(
       "[data-friends-section]"
     );
@@ -881,7 +834,6 @@
   });
 
   global.addEventListener("saino:app-ready", () => {
-    ensureNavigation();
 
     if (view === "friends") {
       render();
@@ -889,12 +841,10 @@
   });
 
   global.addEventListener("saino:language-change", () => {
-    ensureNavigation();
     render();
   });
 
   global.addEventListener("ksk:language-change", () => {
-    ensureNavigation();
     render();
   });
 
