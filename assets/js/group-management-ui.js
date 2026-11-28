@@ -42,25 +42,23 @@
   }
 
   function ensureTab() {
-    const nav = root()?.querySelector(".saino-tabs");
-    if (!nav) return;
-
-    let tab = nav.querySelector("[data-saino-groups-tab]");
-    if (!tab) {
-      tab = document.createElement("button");
-      tab.type = "button";
-      tab.className = "saino-tab";
-      tab.dataset.sainoGroupsTab = "true";
-      nav.appendChild(tab);
+    const host = root()?.querySelector(".saino-header-actions");
+    if (!host) return;
+    let button = host.querySelector("[data-saino-groups-tab]");
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "saino-icon-button saino-groups-shortcut";
+      button.dataset.sainoGroupsTab = "true";
+      button.textContent = "＋";
+      host.appendChild(button);
     }
-
-    tab.textContent = t("Groups", "समूह");
-    tab.setAttribute("aria-label", t("Groups", "समूह"));
+    button.setAttribute("aria-label", t("Groups", "समूह"));
+    button.title = t("Groups", "समूह");
   }
 
   function close() {
     document.querySelector(".saino-groups-overlay")?.remove();
-    root()?.querySelector("[data-saino-groups-tab]")?.classList.remove("active");
     view = "list";
     activeGroup = null;
     memberMenu = "";
@@ -72,7 +70,6 @@
     activeGroup = null;
     notice = "";
     search = "";
-    root().querySelector("[data-saino-groups-tab]")?.classList.add("active");
     render();
     await loadGroups();
   }
