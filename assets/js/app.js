@@ -568,11 +568,7 @@
         <nav
           class="saino-tabs"
           aria-label="${english ? "Main navigation" : "मुख्य नेभिगेसन"}"
-        >
-          <button class="saino-tab active" type="button" aria-current="page">
-            ${escapeHTML(t("chats", "Chats", "च्याट"))}
-          </button>
-        </nav>
+        ></nav>
 
         <div
           class="saino-chat-list"
