@@ -98,52 +98,6 @@
     }, 3200);
   }
 
-  function ensureNavigation() {
-    const nav = document.querySelector(".saino-tabs");
-
-    if (!nav) return;
-
-    const chats = nav.querySelector(".saino-tab");
-
-    if (chats) {
-      chats.dataset.sainoView = "chats";
-
-      chats.classList.toggle(
-        "active",
-        currentView === "chats"
-      );
-
-      chats.setAttribute(
-        "aria-current",
-        currentView === "chats" ? "page" : "false"
-      );
-    }
-
-    let feed = nav.querySelector(
-      '[data-saino-view="feed"]'
-    );
-
-    if (!feed) {
-      feed = document.createElement("button");
-      feed.type = "button";
-      feed.className = "saino-tab";
-      feed.dataset.sainoView = "feed";
-      nav.appendChild(feed);
-    }
-
-    feed.textContent = text("Feed", "फिड");
-
-    feed.classList.toggle(
-      "active",
-      currentView === "feed"
-    );
-
-    feed.setAttribute(
-      "aria-current",
-      currentView === "feed" ? "page" : "false"
-    );
-  }
-
   function renderPost(post) {
     const author = escapeHTML(
       post.author || text("Saino member", "Saino सदस्य")
@@ -595,11 +549,12 @@
   function showFeed() {
     currentView = "feed";
 
-    ensureNavigation();
 
     const app = document.querySelector(".saino-app");
 
     app?.classList.add("feed-open");
+    app?.querySelector(".saino-friends-page")?.remove();
+    app?.querySelector(".saino-sidebar")?.classList.remove("saino-hidden");
 
     if (!posts.length) {
       loadFeed();
@@ -615,44 +570,13 @@
 
     app?.classList.remove("feed-open");
 
-    ensureNavigation();
 
     global.SainoApp?.render?.();
   }
 
   document.addEventListener("click", event => {
     const target = event.target;
-
     if (!(target instanceof Element)) return;
-
-    const friendsTab = target.closest(
-      "[data-saino-friends-tab]"
-    );
-
-    if (friendsTab) {
-      currentView = "chats";
-
-      document.querySelector(".saino-app")
-        ?.classList.remove("feed-open");
-
-      return;
-    }
-
-    const viewButton = target.closest(
-      "[data-saino-view]"
-    );
-
-    if (viewButton) {
-      if (viewButton.dataset.sainoView === "feed") {
-        showFeed();
-      } else if (
-        viewButton.dataset.sainoView === "chats"
-      ) {
-        showChats();
-      }
-
-      return;
-    }
 
     const action = target.closest("[data-feed-action]");
 
@@ -710,7 +634,6 @@
       ""
     );
 
-    ensureNavigation();
 
     if (currentView === "feed") {
       showFeed();
@@ -736,15 +659,15 @@
   );
 
   global.addEventListener("saino:language-change", () => {
-    if (currentView === "feed") {
-      renderFeed();
-    } else {
-      ensureNavigation();
-    }
+    if (currentView === "feed") renderFeed();
   });
 
   global.SainoFeedUI = Object.freeze({
     open: showFeed,
+    close: () => {
+      currentView = "chats";
+      document.querySelector(".saino-app")?.classList.remove("feed-open");
+    },
     refresh: () => loadFeed(),
     getPosts: () => posts.slice()
   });
