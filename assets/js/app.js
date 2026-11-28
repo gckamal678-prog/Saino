@@ -231,18 +231,6 @@
               `
               : ""
           }
-
-          <div style="display:flex;justify-content:flex-end;margin-top:12px">
-            <button
-              type="button"
-              data-action="toggle-language"
-              class="saino-button-secondary"
-              style="min-height:36px;padding:0 13px;border-radius:18px"
-            >
-              ${english ? "नेपाली" : "English"}
-            </button>
-          </div>
-
         </div>
       </section>
     `;
@@ -537,13 +525,6 @@
           </div>
 
           <div class="saino-header-actions">
-            <button
-              class="saino-icon-button"
-              type="button"
-              data-action="toggle-language"
-              aria-label="${english ? "Change language" : "भाषा परिवर्तन"}"
-              title="${english ? "Change language" : "भाषा परिवर्तन"}"
-            >${english ? "ने" : "EN"}</button>
 
             <button
               class="saino-icon-button"
@@ -564,11 +545,6 @@
             autocomplete="off"
           >
         </div>
-
-        <nav
-          class="saino-tabs"
-          aria-label="${english ? "Main navigation" : "मुख्य नेभिगेसन"}"
-        ></nav>
 
         <div
           class="saino-chat-list"
@@ -774,17 +750,6 @@
     if (!button) return;
 
     const action = button.dataset.action;
-
-    if (action === "toggle-language") {
-      language()?.toggleLanguage?.();
-
-      const user = auth()?.getUser?.();
-
-      if (user) renderAuthenticated(user);
-      else renderAuth();
-
-      return;
-    }
 
     if (action === "toggle-auth") {
       mode = mode === "login" ? "signup" : "login";
