@@ -1,27 +1,25 @@
 
 /* =========================================================
-   SAINO — PERMANENT WHATSAPP-STYLE BOTTOM NAVIGATION
+   SAINO — PERMANENT BOTTOM NAVIGATION
 ========================================================= */
 
-.saino-tabs .saino-nav-hidden {
-  display: none !important;
+#saino-app {
+  position: relative;
 }
 
-/* Main navigation bar */
+/* Navigation container */
 
-#saino-app .saino-app .saino-tabs.saino-navigation-fixed {
+#saino-app > .saino-tabs.saino-navigation-fixed {
   position: absolute !important;
   z-index: 1000 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+
   left: 0 !important;
+  bottom: 0 !important;
 
   display: flex !important;
-  width: 100% !important;
-  min-width: 0 !important;
+  width: var(--saino-sidebar-width, 390px) !important;
+  height: 68px !important;
   min-height: 68px !important;
-  height: auto !important;
-  flex: 0 0 68px !important;
 
   align-items: stretch !important;
   justify-content: space-around !important;
@@ -40,7 +38,7 @@
   box-sizing: border-box !important;
 }
 
-/* Individual navigation buttons */
+/* Buttons */
 
 #saino-app .saino-nav-item {
   position: relative !important;
@@ -71,17 +69,7 @@
 
   white-space: nowrap !important;
   cursor: pointer !important;
-
-  transition:
-    color .18s ease,
-    background .18s ease !important;
 }
-
-#saino-app .saino-nav-item:active {
-  background: rgba(255, 255, 255, .06) !important;
-}
-
-/* Active navigation */
 
 #saino-app .saino-nav-item.active {
   color: #20c875 !important;
@@ -92,26 +80,21 @@
   content: "";
   position: absolute;
   top: 0;
-
   width: 21px;
   height: 3px;
-
   border-radius: 5px;
   background: #20c875;
 }
 
-/* Professional line icons */
+/* SVG icons */
 
 #saino-app .saino-nav-icon {
   position: relative;
-
   display: flex;
   width: 27px;
   height: 27px;
-
   align-items: center;
   justify-content: center;
-
   color: currentColor;
 }
 
@@ -119,7 +102,6 @@
   display: block;
   width: 24px;
   height: 24px;
-
   fill: none;
   stroke: currentColor;
   stroke-width: 1.75;
@@ -127,36 +109,27 @@
   stroke-linejoin: round;
 }
 
-#saino-app .saino-nav-item.active .saino-nav-icon svg {
-  stroke-width: 2;
-}
-
-/* Navigation labels */
+/* Labels */
 
 #saino-app .saino-nav-label {
   display: block;
   width: 100%;
-  max-width: 100%;
-
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
-
   font-size: 10px;
   font-weight: 600;
   line-height: 13px;
 }
 
-/* Profile avatar — last item on right */
+/* Profile */
 
 #saino-app .saino-nav-profile-icon {
   width: 28px;
   height: 28px;
-
   overflow: hidden;
   border: 2px solid #82929b;
   border-radius: 50%;
-
   background: #26343c;
   box-sizing: border-box;
 }
@@ -168,106 +141,69 @@
 #saino-app .saino-nav-profile-icon svg {
   width: 19px;
   height: 19px;
-  stroke-width: 1.7;
 }
 
 #saino-app .saino-nav-avatar {
   display: block;
   width: 100%;
   height: 100%;
-
   border-radius: 50%;
   object-fit: cover;
 }
 
-/* Notification count */
-
-#saino-app .saino-nav-notifications .saino-nav-icon {
-  overflow: visible;
-}
+/* Notification badge */
 
 #saino-app .saino-nav-badge {
   position: absolute;
   top: -5px;
   right: -8px;
-
   display: flex;
   min-width: 16px;
   height: 16px;
-
   align-items: center;
   justify-content: center;
-
   padding: 0 4px;
-
   border: 2px solid #111b21;
   border-radius: 20px;
-
   background: #e5484d;
   color: #fff;
-
   font-size: 9px;
   font-weight: 750;
   line-height: 1;
-  text-align: center;
 }
 
 #saino-app .saino-nav-badge[hidden] {
   display: none !important;
 }
 
-/* Keep content scrollable above the navigation */
+/* Hide settings/groups only inside the bottom navigation */
+
+#saino-app .saino-tabs .saino-nav-hidden {
+  display: none !important;
+}
+
+/* Mobile: full-width navigation */
 
 @media (max-width: 640px) {
-  #saino-app .saino-app {
-    position: relative !important;
-    overflow: hidden !important;
-  }
+  #saino-app > .saino-tabs.saino-navigation-fixed {
+    position: absolute !important;
+    right: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
 
-  #saino-app .saino-app .saino-sidebar {
-    padding-bottom: 68px;
-    box-sizing: border-box;
-  }
+    width: 100% !important;
+    height: 68px !important;
+    min-height: 68px !important;
 
-  #saino-app .saino-app .saino-chat-list {
-    padding-bottom: 76px;
-  }
-
-  #saino-app .saino-app .saino-feed-panel {
-    padding-bottom: 68px;
-    box-sizing: border-box;
-  }
-
-  #saino-app .saino-app .saino-friends-page {
-    padding-bottom: 76px;
-    box-sizing: border-box;
-  }
-
-  #saino-app .saino-app .saino-tabs.saino-navigation-fixed {
     display: flex !important;
     visibility: visible !important;
     pointer-events: auto !important;
   }
 
-  /* Keep navigation visible even when feed is open. */
-
-  #saino-app .saino-app.feed-open .saino-tabs,
-  #saino-app .saino-app.chat-open .saino-tabs {
-    display: flex !important;
-    visibility: visible !important;
-  }
-}
-
-/* Desktop */
-
-@media (min-width: 641px) {
-  #saino-app .saino-app .saino-tabs.saino-navigation-fixed {
-    position: absolute !important;
-    right: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-
-    width: 390px !important;
-    min-height: 68px !important;
+  #saino-app .saino-chat-list,
+  #saino-app .saino-friends-page,
+  #saino-app .saino-feed-panel {
+    padding-bottom: 78px !important;
+    box-sizing: border-box;
   }
 }
