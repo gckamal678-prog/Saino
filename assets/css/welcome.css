@@ -1,55 +1,27 @@
 
 /* SAINO — Splash and Welcome Design */
 
-:root {
-  --saino-welcome-blue: #0755d9;
-  --saino-welcome-deep: #082b72;
-  --saino-welcome-red: #dc2638;
-}
-
 .saino-welcome-overlay {
   position: fixed;
   z-index: 99999;
   inset: 0;
   display: grid;
   place-items: center;
-  overflow: hidden;
-  padding: 24px;
+  overflow-y: auto;
+  padding: 24px 18px;
   color: #fff;
   background:
-    radial-gradient(ellipse at 78% 20%, rgba(255,255,255,.95) 0 2%, transparent 28%),
-    radial-gradient(ellipse at 18% 16%, rgba(255,255,255,.8), transparent 30%),
-    linear-gradient(155deg, #74c7ff 0%, #dff4ff 34%, #6eb5e9 60%, #124b9b 100%);
+    linear-gradient(
+      180deg,
+      rgba(3, 20, 48, .30),
+      rgba(3, 20, 48, .70)
+    ),
+    url("../images/saino-welcome-bg.png")
+      center center / cover no-repeat,
+    #123e72;
   opacity: 1;
   transition: opacity .45s ease, visibility .45s ease;
   isolation: isolate;
-}
-
-.saino-welcome-overlay::before,
-.saino-welcome-overlay::after {
-  position: absolute;
-  z-index: -1;
-  right: -12%;
-  bottom: -18%;
-  left: -12%;
-  height: 58%;
-  content: "";
-  background: linear-gradient(145deg, #164f83, #0a2e63 72%);
-  clip-path: polygon(
-    0 70%, 13% 40%, 23% 62%, 39% 8%,
-    54% 58%, 69% 18%, 82% 55%,
-    100% 20%, 100% 100%, 0 100%
-  );
-}
-
-.saino-welcome-overlay::after {
-  right: -15%;
-  bottom: -24%;
-  left: -15%;
-  height: 54%;
-  opacity: .55;
-  background: linear-gradient(145deg, #d8f1ff, #3f88c9);
-  transform: translateY(-35px) scaleX(-1);
 }
 
 .saino-welcome-overlay.is-leaving {
@@ -61,62 +33,34 @@
 .saino-welcome-content {
   width: min(100%, 480px);
   text-align: center;
+  margin: auto;
   animation: saino-welcome-rise .7s both ease-out;
 }
 
 .saino-welcome-flag {
   margin-bottom: 12px;
   font-size: 34px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.15));
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.2));
 }
 
 .saino-welcome-logo {
-  display: grid;
-  width: 88px;
-  height: 88px;
-  margin: 0 auto 14px;
-  place-items: center;
-  border: 3px solid rgba(255,255,255,.85);
-  border-radius: 29px 29px 29px 8px;
-  background: linear-gradient(145deg, #1678ff, #0739b6);
-  box-shadow: 0 14px 35px rgba(0,34,105,.3),
-    inset 0 1px 0 rgba(255,255,255,.35);
-  font-size: 45px;
-  font-weight: 900;
-  letter-spacing: -4px;
-}
-
-.saino-welcome-name {
-  margin: 0;
-  color: #082b72;
-  font-size: clamp(48px, 13vw, 70px);
-  font-weight: 900;
-  letter-spacing: -3px;
-  line-height: 1;
-  text-shadow: 0 2px 0 rgba(255,255,255,.55);
-}
-
-.saino-welcome-underline {
-  width: 112px;
-  height: 7px;
-  margin: 12px auto 18px;
-  border-radius: 99px;
-  background: var(--saino-welcome-red);
-  transform: rotate(-3deg);
-}
-
-.saino-welcome-slogan {
-  margin: 0;
-  color: #082b72;
-  font-size: clamp(19px, 5vw, 25px);
-  font-weight: 800;
+  display: block;
+  width: min(78vw, 340px);
+  height: auto;
+  max-height: 38vh;
+  object-fit: contain;
+  margin: 0 auto 22px;
+  border-radius: 22px;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.3));
 }
 
 .saino-welcome-description {
   max-width: 360px;
   margin: 12px auto 25px;
-  color: #103c73;
-  font-size: 15px;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0,0,0,.8);
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1.8;
 }
 
@@ -135,9 +79,8 @@
   border-radius: 999px;
   font: inherit;
   font-weight: 800;
-  transition: transform .18s ease,
-    box-shadow .18s ease,
-    background .18s ease;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
 }
 
 .saino-welcome-start {
@@ -146,18 +89,22 @@
   box-shadow: 0 9px 22px rgba(5,45,125,.3);
 }
 
-.saino-welcome-start:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 25px rgba(5,45,125,.36);
-}
-
 .saino-welcome-skip {
   color: #082b72;
-  background: rgba(255,255,255,.72);
+  background: rgba(255,255,255,.95);
 }
 
+.saino-welcome-start:hover,
 .saino-welcome-skip:hover {
-  background: #fff;
+  transform: translateY(-2px);
+}
+
+.saino-welcome-bottom-note {
+  margin: 24px 0 0;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 1px 5px rgba(0,0,0,.7);
 }
 
 .saino-splash-loading {
@@ -166,7 +113,8 @@
   justify-content: center;
   gap: 9px;
   margin-top: 28px;
-  color: #123e72;
+  color: #fff;
+  text-shadow: 0 1px 5px rgba(0,0,0,.65);
   font-size: 13px;
   font-weight: 700;
 }
@@ -180,7 +128,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #0755d9;
+  background: #fff;
   animation: saino-dot-pulse 1s infinite ease-in-out;
 }
 
@@ -190,14 +138,6 @@
 
 .saino-splash-dots span:nth-child(3) {
   animation-delay: .3s;
-}
-
-.saino-welcome-bottom-note {
-  margin: 24px 0 0;
-  color: rgba(255,255,255,.95);
-  font-size: 12px;
-  font-weight: 700;
-  text-shadow: 0 1px 5px rgba(0,0,0,.25);
 }
 
 @keyframes saino-welcome-rise {
@@ -228,13 +168,8 @@
   }
 
   .saino-welcome-logo {
-    width: 76px;
-    height: 76px;
-    font-size: 39px;
-  }
-
-  .saino-welcome-description {
-    margin-bottom: 19px;
+    width: min(76vw, 300px);
+    max-height: 34vh;
   }
 }
 
