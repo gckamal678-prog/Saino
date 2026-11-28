@@ -78,24 +78,6 @@
       </div>`;
   }
 
-  function injectNavigation() {
-    const nav = document.querySelector(".saino-tabs");
-
-    if (!nav || nav.querySelector("[data-saino-profile-open]")) return;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "saino-tab";
-    button.dataset.sainoProfileOpen = "true";
-    button.textContent = tr("Profile", "प्रोफाइल");
-    button.setAttribute(
-      "aria-label",
-      tr("Open your profile", "आफ्नो प्रोफाइल खोल्नुहोस्")
-    );
-
-    nav.appendChild(button);
-  }
-
   function ensureOverlay() {
     if (root()) return root();
 
@@ -129,6 +111,9 @@
         </header>
 
         <nav class="saino-profile-tabs">
+          <button type="button" data-profile-action="open-settings">
+            ${tr("Settings", "सेटिङ्स")}
+          </button>
           <button type="button" data-profile-tab="profile">
             ${tr("Profile", "प्रोफाइल")}
           </button>
@@ -200,6 +185,7 @@
 
     overlay.hidden = false;
     document.body.classList.add("saino-profile-open");
+    global.SainoNavigation?.setActive?.("profile");
 
     tab = "profile";
     editingId = "";
@@ -226,6 +212,7 @@
 
     document.body.classList.remove("saino-profile-open");
     editingId = "";
+    global.SainoNavigation?.refresh?.();
   }
 
   function content() {
@@ -943,6 +930,12 @@
       return;
     }
 
+    if (action === "open-settings") {
+      close();
+      global.SainoSettingsUI?.open?.();
+      return;
+    }
+
     if (action === "cancel-edit") {
       editingId = "";
       render();
@@ -1026,11 +1019,6 @@
   }
 
   function handleDocumentClick(event) {
-    if (event.target.closest("[data-saino-profile-open]")) {
-      event.preventDefault();
-      open();
-    }
-
     const overlay = root();
 
     if (overlay && event.target === overlay) close();
@@ -1056,7 +1044,6 @@
   document.addEventListener("change", handleChange);
   document.addEventListener("keydown", handleKeydown);
 
-  global.addEventListener("saino:app-ready", injectNavigation);
 
   global.SainoProfileUI = Object.freeze({
     open,
