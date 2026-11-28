@@ -1,8 +1,7 @@
 
 /* =========================================================
    SAINO — FEED UI
-   WhatsApp-inspired responsive Feed
-   Theme-aware background: Light / Dark
+   Responsive, Theme-aware Feed
    ========================================================= */
 
 .saino-feed-panel {
@@ -15,11 +14,8 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-
-  /* मुख्य सुधार: सेतो रङ स्थायी रूपमा नराख्ने */
   background: var(--saino-bg, #f4f7f6);
   color: var(--saino-text, #172b27);
-
   scrollbar-width: thin;
   scrollbar-color: var(--saino-border, #dce5e1) transparent;
 }
@@ -33,63 +29,20 @@
   background: var(--saino-border, #dce5e1);
 }
 
-/* -------------------------
-   FEED HEADER
-   ------------------------- */
-
+/* Feed header removed */
 .saino-feed-header {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-
-  display: flex;
-  min-height: 76px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  padding: 14px clamp(14px, 4vw, 42px);
-
-  border-bottom: 1px solid var(--saino-border);
-  background: var(--saino-surface);
-  color: var(--saino-text);
+  display: none !important;
 }
 
-.saino-feed-header h1 {
-  margin: 0;
-  color: var(--saino-text);
-  font-size: 22px;
-  font-weight: 750;
-  line-height: 1.3;
-}
-
-.saino-feed-header p {
-  margin: 4px 0 0;
-  color: var(--saino-text-muted);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.saino-feed-refresh {
-  flex: 0 0 auto;
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 22px;
-}
-
-/* -------------------------
-   COMPOSER
-   ------------------------- */
+/* Composer and posts */
 
 .saino-feed-composer,
 .saino-feed-post {
   width: min(100% - 28px, 720px);
   margin: 20px auto 0;
   padding: 18px;
-
   border: 1px solid var(--saino-border);
   border-radius: 18px;
-
   background: var(--saino-surface);
   color: var(--saino-text);
   box-shadow: var(--saino-shadow);
@@ -108,23 +61,16 @@
   width: 100%;
   min-height: 100px;
   resize: vertical;
-
   padding: 13px 14px;
-
   border: 1px solid var(--saino-border);
   border-radius: 14px;
   outline: none;
-
   background: var(--saino-surface-muted);
   color: var(--saino-text);
-
   font-family: inherit;
   font-size: 14px;
   line-height: 1.5;
-
-  transition:
-    border-color .18s ease,
-    box-shadow .18s ease;
+  transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .saino-feed-composer textarea::placeholder {
@@ -137,9 +83,7 @@
   box-shadow: 0 0 0 3px var(--saino-primary-soft);
 }
 
-/* -------------------------
-   COMPOSER ACTIONS
-   ------------------------- */
+/* Composer actions */
 
 .saino-feed-composer-actions {
   display: flex;
@@ -155,19 +99,14 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-
   padding: 0 15px;
-
   border: 1px solid var(--saino-border);
   border-radius: 24px;
-
   background: var(--saino-surface-muted);
   color: var(--saino-primary);
-
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-
   transition: background .18s ease;
 }
 
@@ -186,16 +125,13 @@
 .saino-feed-file-name {
   min-width: 0;
   flex: 1;
-
   overflow: hidden;
-
   color: var(--saino-text-muted);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Publish button */
 .saino-feed-composer-actions .saino-button {
   min-height: 44px;
   padding: 0 22px;
@@ -209,15 +145,11 @@
   background: var(--saino-primary-dark);
 }
 
-/* -------------------------
-   FEED LIST
-   ------------------------- */
+/* Feed list */
 
 .saino-feed-list {
   width: 100%;
   padding-bottom: 28px;
-
-  /* List को खाली भाग पनि Theme अनुसार */
   background: var(--saino-bg);
 }
 
@@ -225,9 +157,7 @@
   margin-top: 14px;
 }
 
-/* -------------------------
-   POST HEADER
-   ------------------------- */
+/* Post header */
 
 .saino-feed-post-header {
   display: flex;
@@ -243,11 +173,9 @@
   flex: 0 0 46px;
   place-items: center;
   overflow: hidden;
-
   border-radius: 50%;
   background: var(--saino-primary-soft);
   color: var(--saino-primary-dark);
-
   font-size: 15px;
   font-weight: 750;
 }
@@ -283,12 +211,10 @@
 .saino-feed-delete {
   flex: 0 0 auto;
   padding: 7px 9px;
-
   border: 0;
   border-radius: 8px;
   background: transparent;
   color: var(--saino-danger);
-
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -298,31 +224,24 @@
   background: rgba(217, 67, 67, .1);
 }
 
-/* -------------------------
-   POST TEXT
-   ------------------------- */
+/* Post text */
 
 .saino-feed-post-text {
   margin: 16px 0;
   overflow-wrap: anywhere;
-
   color: var(--saino-text);
   font-size: 15px;
   line-height: 1.65;
 }
 
-/* -------------------------
-   POST MEDIA
-   ------------------------- */
+/* Post media */
 
 .saino-feed-media-link {
   display: block;
   margin: 12px -2px 0;
   overflow: hidden;
-
   border: 1px solid var(--saino-border);
   border-radius: 13px;
-
   background: var(--saino-surface-muted);
 }
 
@@ -331,50 +250,37 @@
   width: 100%;
   max-height: 560px;
   margin: 0 auto;
-
   object-fit: contain;
 }
 
-/* -------------------------
-   POST FOOTER
-   ------------------------- */
+/* Post footer */
 
 .saino-feed-post-footer {
   display: flex;
   justify-content: flex-end;
-
   margin-top: 12px;
   padding-top: 10px;
-
   border-top: 1px solid var(--saino-border);
-
   color: var(--saino-text-muted);
   font-size: 12px;
 }
 
-/* -------------------------
-   EMPTY / LOADING STATE
-   ------------------------- */
+/* Empty and loading state */
 
 .saino-feed-state {
   width: min(100% - 28px, 720px);
   margin: 22px auto;
   padding: 26px;
-
   border: 1px dashed var(--saino-border);
   border-radius: 14px;
-
   background: var(--saino-surface);
   color: var(--saino-text-muted);
-
   font-size: 14px;
   line-height: 1.5;
   text-align: center;
 }
 
-/* -------------------------
-   FEED MORE
-   ------------------------- */
+/* Feed more */
 
 .saino-feed-more-wrap {
   display: flex;
@@ -386,17 +292,13 @@
   border-radius: 22px;
 }
 
-/* -------------------------
-   FEED OPEN STATE
-   ------------------------- */
+/* Feed open state */
 
 .saino-app.feed-open .saino-feed-panel {
   display: flex;
 }
 
-/* -------------------------
-   MOBILE
-   ------------------------- */
+/* Mobile */
 
 @media (max-width: 640px) {
   .saino-app.feed-open .saino-sidebar {
@@ -409,33 +311,8 @@
     min-width: 0;
     height: 100%;
     min-height: 0;
-
-    /* मोबाइलमा एपकै Dark Theme */
     background: var(--saino-bg, #0b141a);
     color: var(--saino-text, #e9edef);
-  }
-
-  .saino-feed-header {
-    min-height: 76px;
-    gap: 8px;
-    padding: 10px 14px;
-
-    background: var(--saino-surface, #0b141a);
-    border-bottom-color: var(--saino-border);
-  }
-
-  .saino-feed-header h1 {
-    font-size: 19px;
-  }
-
-  .saino-feed-header p {
-    font-size: 12px;
-  }
-
-  .saino-feed-refresh {
-    min-height: 40px;
-    padding: 0 13px;
-    font-size: 12px;
   }
 
   .saino-feed-composer,
@@ -443,7 +320,6 @@
     width: calc(100% - 20px);
     margin-top: 10px;
     padding: 14px;
-
     border-radius: 17px;
     background: var(--saino-surface, #0b141a);
   }
@@ -455,11 +331,9 @@
   .saino-feed-composer textarea {
     min-height: 100px;
     padding: 12px;
-
     border-radius: 14px;
     background: var(--saino-surface-muted, #202c33);
     color: var(--saino-text, #e9edef);
-
     font-size: 14px;
   }
 
@@ -525,13 +399,9 @@
     width: calc(100% - 20px);
     background: var(--saino-surface, #0b141a);
   }
-}
 
-/* -------------------------
-   DARK THEME SAFETY
-   ------------------------- */
+  /* Dark theme safety */
 
-@media (max-width: 640px) {
   .saino-feed-panel,
   .saino-feed-list {
     background-color: #0b141a;
@@ -544,10 +414,6 @@
     color: #e9edef;
   }
 
-  .saino-feed-header {
-    background-color: #0b141a;
-  }
-
   .saino-feed-composer textarea {
     background-color: #202c33;
     color: #e9edef;
@@ -558,8 +424,7 @@
     color: #e9edef;
   }
 
-  .saino-feed-author time,
-  .saino-feed-header p {
+  .saino-feed-author time {
     color: #8696a0;
   }
 }
