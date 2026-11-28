@@ -1,17 +1,23 @@
+
 <!DOCTYPE html>
 <html lang="ne">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#075e54">
-    <meta name="description" content="Saino - Connect with friends and family.">
-    <title>Saino</title>
+
+    <meta name="theme-color" content="#0755d9">
+    <meta name="description" content="Saino - नेपाली मन, नेपाली संग।">
+
+    <title>Saino - नेपाली मन, नेपाली संग</title>
 
     <!-- Application Styles -->
     <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="assets/css/welcome.css">
+
     <link rel="stylesheet" href="assets/css/friends.css">
     <link rel="stylesheet" href="assets/css/feed.css">
     <link rel="stylesheet" href="assets/css/feed-interactions.css">
+
     <link rel="stylesheet" href="assets/css/messenger-media.css">
     <link rel="stylesheet" href="assets/css/messenger-presence.css">
     <link rel="stylesheet" href="assets/css/messenger-receipts.css">
@@ -19,16 +25,24 @@
     <link rel="stylesheet" href="assets/css/messenger-search.css">
     <link rel="stylesheet" href="assets/css/messenger-actions.css">
     <link rel="stylesheet" href="assets/css/messenger-history.css">
+
     <link rel="stylesheet" href="assets/css/profile.css">
     <link rel="stylesheet" href="assets/css/settings.css">
     <link rel="stylesheet" href="assets/css/group-management.css">
 
-
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
+
 <body>
-    <main id="saino-app" class="saino-app" aria-live="polite"></main>
+
+    <!-- Main Application -->
+    <main
+        id="saino-app"
+        class="saino-app"
+        aria-live="polite">
+    </main>
 
     <!-- Language Service -->
     <script src="assets/js/i18n.js"></script>
@@ -50,9 +64,16 @@
     <!-- Frontend Modules -->
     <script src="assets/js/chat-list.js"></script>
     <script src="assets/js/app.js"></script>
+
+    <!-- Welcome and Splash -->
+    <script src="assets/js/welcome.js"></script>
+
+    <!-- Profile and Settings -->
     <script src="assets/js/profile-ui.js"></script>
     <script src="assets/js/settings-ui.js"></script>
     <script src="assets/js/group-management-ui.js"></script>
+
+    <!-- Messenger Modules -->
     <script src="assets/js/messenger-media.js"></script>
     <script src="assets/js/messenger-presence-ui.js"></script>
     <script src="assets/js/messenger-receipts-ui.js"></script>
@@ -60,9 +81,16 @@
     <script src="assets/js/messenger-search-ui.js"></script>
     <script src="assets/js/messenger-actions-ui.js"></script>
     <script src="assets/js/messenger-history-ui.js"></script>
+
+    <!-- Notifications -->
     <script src="assets/js/notifications-ui.js"></script>
+
+    <!-- Friends -->
     <script src="assets/js/friends.js"></script>
+
+    <!-- Feed -->
     <script src="assets/js/feed-ui.js"></script>
     <script src="assets/js/feed-interactions.js"></script>
+
 </body>
 </html>
