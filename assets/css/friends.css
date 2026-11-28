@@ -16,138 +16,12 @@
   background: var(--saino-bg);
 }
 
-/* -------------------------
-   FRIENDS HEADER
-   ------------------------- */
-
+/* Friends header hidden */
 .saino-friends-header {
-  display: flex;
-  min-height: 92px;
-  align-items: center;
-  gap: 14px;
-  padding: 18px clamp(16px, 4vw, 48px);
-  border-bottom: 1px solid var(--saino-border);
-  background: var(--saino-surface);
+  display: none !important;
 }
 
-/* Refresh — LEFT SIDE */
-.saino-friends-reload {
-  order: 0;
-
-  display: inline-flex;
-  width: 42px;
-  height: 42px;
-  min-height: 42px;
-  flex: 0 0 42px;
-  align-items: center;
-  justify-content: center;
-
-  margin: 0;
-  padding: 0;
-
-  border: 1px solid var(--saino-border);
-  border-radius: 50%;
-
-  background: var(--saino-surface);
-  color: var(--saino-text);
-
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-
-  transition:
-    background .18s ease,
-    color .18s ease,
-    transform .18s ease;
-}
-
-.saino-friends-reload:hover {
-  background: var(--saino-primary-soft);
-  color: var(--saino-primary-dark);
-}
-
-.saino-friends-reload:active {
-  transform: rotate(35deg);
-}
-
-/* Friends title — CENTER */
-.saino-friends-header > div {
-  order: 1;
-  min-width: 0;
-  flex: 1;
-}
-
-.saino-friends-header h1 {
-  margin: 0;
-  color: var(--saino-text);
-  font-size: 23px;
-  font-weight: 750;
-}
-
-.saino-friends-header p {
-  margin: 3px 0 0;
-  color: var(--saino-text-muted);
-  font-size: 13px;
-}
-
-/* Back × — RIGHT SIDE */
-.saino-friends-back {
-  order: 2;
-
-  display: inline-flex;
-  width: 42px;
-  height: 42px;
-  min-height: 42px;
-  flex: 0 0 42px;
-  align-items: center;
-  justify-content: center;
-
-  margin-left: auto;
-  padding: 0;
-
-  border: 1px solid var(--saino-border);
-  border-radius: 50%;
-
-  background: var(--saino-surface);
-  color: var(--saino-text);
-
-  /* पुरानो ‹ Chats लेखाइ लुकाएर × देखाउने */
-  font-size: 0;
-  line-height: 1;
-  cursor: pointer;
-
-  transition:
-    background .18s ease,
-    color .18s ease,
-    transform .18s ease;
-}
-
-.saino-friends-back::before {
-  content: "×";
-  display: block;
-  font-size: 27px;
-  font-weight: 400;
-  line-height: 1;
-}
-
-.saino-friends-back:hover {
-  background: var(--saino-primary-soft);
-  color: var(--saino-primary-dark);
-}
-
-.saino-friends-back:active {
-  transform: scale(.92);
-}
-
-.saino-friends-back:focus-visible,
-.saino-friends-reload:focus-visible {
-  outline: 2px solid var(--saino-primary);
-  outline-offset: 3px;
-}
-
-/* -------------------------
-   FRIENDS NAVIGATION
-   ------------------------- */
+/* Friends navigation */
 
 .saino-friends-nav {
   display: flex;
@@ -172,6 +46,7 @@
   color: var(--saino-text-muted);
   font-size: 13px;
   font-weight: 650;
+  cursor: pointer;
 }
 
 .saino-friends-nav button.active {
@@ -191,9 +66,7 @@
   font-size: 11px;
 }
 
-/* -------------------------
-   FRIENDS CONTENT
-   ------------------------- */
+/* Friends content */
 
 .saino-friends-content {
   width: min(100%, 980px);
@@ -293,6 +166,7 @@
   color: var(--saino-text);
   font-size: 12px;
   font-weight: 650;
+  cursor: pointer;
 }
 
 .saino-friend-action.primary {
@@ -342,33 +216,9 @@
   color: var(--saino-danger);
 }
 
-/* -------------------------
-   MOBILE
-   ------------------------- */
+/* Mobile */
 
 @media (max-width: 640px) {
-  .saino-friends-header {
-    min-height: 76px;
-    gap: 12px;
-    padding: 12px 16px;
-  }
-
-  .saino-friends-header h1 {
-    font-size: 19px;
-  }
-
-  .saino-friends-header p {
-    font-size: 12px;
-  }
-
-  .saino-friends-reload,
-  .saino-friends-back {
-    width: 42px;
-    height: 42px;
-    min-height: 42px;
-    flex-basis: 42px;
-  }
-
   .saino-friends-nav {
     padding: 10px 12px;
   }
