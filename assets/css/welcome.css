@@ -1,7 +1,7 @@
 
 /* =========================================
    SAINO — WELCOME & SPLASH SCREEN
-   Smaller center logo + Nepali background
+   Extra Small Center Logo
 ========================================= */
 
 :root {
@@ -14,14 +14,11 @@
   position: fixed;
   z-index: 99999;
   inset: 0;
-
   display: grid;
   place-items: center;
-
   overflow-y: auto;
   overflow-x: hidden;
-
-  padding: 20px 18px;
+  padding: 16px 14px;
   color: #fff;
 
   background:
@@ -45,8 +42,6 @@
   pointer-events: none;
 }
 
-/* Main content */
-
 .saino-welcome-content {
   width: min(100%, 440px);
   margin: auto;
@@ -54,125 +49,84 @@
   animation: saino-welcome-rise .7s both ease-out;
 }
 
-/* Nepal flag */
-
 .saino-welcome-flag {
-  margin-bottom: 8px;
-  font-size: 28px;
+  margin-bottom: 6px;
+  font-size: 25px;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,.3));
 }
 
-/* Center Saino logo — reduced size */
+/* Extra small center logo */
 
 .saino-welcome-logo {
   display: block;
-
-  width: min(60vw, 250px);
+  width: min(43vw, 175px);
   height: auto;
-  max-height: 30vh;
-
+  max-height: 22vh;
   object-fit: contain;
   object-position: center;
-
-  margin: 0 auto 18px;
-
-  border-radius: 20px;
-
-  filter:
-    drop-shadow(0 9px 18px rgba(0,0,0,.35));
+  margin: 0 auto 14px;
+  border-radius: 16px;
+  filter: drop-shadow(0 7px 14px rgba(0,0,0,.35));
 }
-
-/* Welcome name */
 
 .saino-welcome-name {
   margin: 0;
-
   color: #fff;
-  font-size: clamp(38px, 10vw, 58px);
+  font-size: clamp(34px, 9vw, 48px);
   font-weight: 900;
-
   text-shadow: 0 3px 8px rgba(0,0,0,.55);
 }
 
-/* Underline */
-
 .saino-welcome-underline {
-  width: 100px;
-  height: 6px;
-
-  margin: 10px auto 16px;
-
+  width: 85px;
+  height: 5px;
+  margin: 8px auto 13px;
   border-radius: 99px;
   background: var(--saino-red);
 }
 
-/* Slogan */
-
 .saino-welcome-slogan {
-  margin: 0 0 12px;
-
+  margin: 0 0 10px;
   color: #fff;
-  font-size: clamp(17px, 4.5vw, 23px);
+  font-size: clamp(16px, 4.2vw, 21px);
   font-weight: 900;
-
   text-shadow: 0 2px 7px rgba(0,0,0,.7);
 }
 
-/* Description */
-
 .saino-welcome-description {
   max-width: 360px;
-
-  margin: 12px auto 22px;
-
+  margin: 10px auto 18px;
   color: #fff;
   font-size: 15px;
   font-weight: 700;
   line-height: 1.8;
-
   text-shadow: 0 2px 7px rgba(0,0,0,.85);
 }
 
-/* Buttons */
-
 .saino-welcome-actions {
   display: grid;
-  gap: 11px;
-
-  width: min(100%, 310px);
+  gap: 10px;
+  width: min(100%, 300px);
   margin: 0 auto;
 }
 
 .saino-welcome-start,
 .saino-welcome-skip {
   width: 100%;
-  min-height: 50px;
-
-  padding: 12px 18px;
-
+  min-height: 48px;
+  padding: 11px 17px;
   border: 0;
   border-radius: 999px;
-
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-
   cursor: pointer;
-
-  transition:
-    transform .18s ease,
-    box-shadow .18s ease;
+  transition: transform .18s ease, box-shadow .18s ease;
 }
 
 .saino-welcome-start {
   color: #fff;
-
-  background: linear-gradient(
-    110deg,
-    #0755d9,
-    #07358f
-  );
-
+  background: linear-gradient(110deg, #0755d9, #07358f);
   box-shadow: 0 8px 20px rgba(0,30,100,.35);
 }
 
@@ -186,32 +140,23 @@
   transform: scale(.97);
 }
 
-/* Bottom note */
-
 .saino-welcome-bottom-note {
-  margin: 22px 0 0;
-
+  margin: 18px 0 0;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
-
   text-shadow: 0 2px 6px rgba(0,0,0,.85);
 }
-
-/* Splash loading */
 
 .saino-splash-loading {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-
-  margin-top: 24px;
-
+  margin-top: 20px;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
-
   text-shadow: 0 2px 6px rgba(0,0,0,.7);
 }
 
@@ -223,10 +168,8 @@
 .saino-splash-dots span {
   width: 7px;
   height: 7px;
-
   border-radius: 50%;
   background: #fff;
-
   animation: saino-dot-pulse 1s infinite ease-in-out;
 }
 
@@ -238,14 +181,11 @@
   animation-delay: .3s;
 }
 
-/* Animations */
-
 @keyframes saino-welcome-rise {
   from {
     opacity: 0;
     transform: translateY(16px) scale(.98);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -257,64 +197,53 @@
     opacity: .35;
     transform: translateY(0);
   }
-
   30% {
     opacity: 1;
     transform: translateY(-5px);
   }
 }
 
-/* Small screens */
-
 @media (max-width: 380px) {
   .saino-welcome-overlay {
-    padding: 16px 14px;
+    padding: 12px;
   }
 
   .saino-welcome-logo {
-    width: min(58vw, 220px);
-    max-height: 26vh;
-    margin-bottom: 14px;
+    width: min(40vw, 150px);
+    max-height: 19vh;
+    margin-bottom: 12px;
   }
 
   .saino-welcome-description {
-    margin-bottom: 17px;
+    margin-bottom: 15px;
     font-size: 14px;
   }
 
   .saino-welcome-actions {
-    width: min(100%, 290px);
-  }
-
-  .saino-welcome-bottom-note {
-    margin-top: 18px;
+    width: min(100%, 280px);
   }
 }
-
-/* Short screens */
 
 @media (max-height: 700px) {
   .saino-welcome-overlay {
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .saino-welcome-logo {
-    width: min(52vw, 210px);
-    max-height: 24vh;
-    margin-bottom: 10px;
+    width: min(38vw, 145px);
+    max-height: 17vh;
+    margin-bottom: 9px;
   }
 
   .saino-welcome-description {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
   .saino-welcome-bottom-note {
-    margin-top: 14px;
+    margin-top: 12px;
   }
 }
-
-/* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
   .saino-welcome-overlay,
